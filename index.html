@@ -241,7 +241,7 @@ ol.steps{margin:6px 0 0;padding-left:1.2em;color:var(--muted);font-size:.9rem;di
 <div id="toast" class="toast" hidden></div>
 
 <script>
-const VERSION='2026-10-12o';
+const VERSION='2026-10-26a';
 const clone=o=>JSON.parse(JSON.stringify(o));
 /* ---------- Basis ---------- */
 const STORE='kasboek.v1', LOCAL='kasboek.device';
@@ -826,6 +826,7 @@ function viewOverzicht(){
    ${up.length&&!ui.tag?`<div class="card"><div class="spread"><h2>Komt nog ${isCal()?'deze maand':'vóór '+fmtD(addDays((periodOf(todayISO())||{end:todayISO()}).end,1))}</h2><span class="num">${eur.format(upTot)}</span></div>
      ${up.map(r=>`<div class="rec"><div style="min-width:0"><b>${esc(r.name)}</b>${r.planned?'<span class="pill">gepland</span>':''}<div class="meta">${r.planned?'':'rond '}${fmtD(r.next)}</div></div><div class="amt num">${eur.format(r.amount)}</div></div>`).join('')}
      <p class="note" style="margin-top:8px">Geschat uit eerdere afschrijvingen.</p></div>`:''}
+   ${merchantCard(TX.filter(t=>t.mk===ui.month&&inScope(t)),'Per winkel',esc(mLabel(ui.month)),'maand')}
    <div class="card stack"><h2>Maanden naast elkaar</h2>${barChart(ms.slice(-12))}</div>
    ${ui.tag?'':`<div class="card stack"><h2>Ruimte om te sparen</h2>
      <p class="sub">Gemiddeld per maand, over ${n} afgesloten ${n===1?'maand':'maanden'}.</p>
@@ -864,6 +865,8 @@ function currentTxList(){
   if(ui.fromDate) list=list.filter(t=>t.date>=ui.fromDate);
   if(ui.fmonth) list=list.filter(t=>t.mk===ui.fmonth);
   if(ui.fcat) list=list.filter(t=>t.cat===ui.fcat);
+  if(ui.fmerch) list=list.filter(t=>merchantName(t)===ui.fmerch);
+  if(ui.toDate) list=list.filter(t=>t.date<=ui.toDate);
   if(ui.ftag) list=list.filter(t=>ui.ftag==='__none'?!t.tags.length:ui.ftag==='__oneoff'?!!S.oneoff[t.id]:t.tags.includes(ui.ftag));
   if(ui.q){const q=ui.q.toLowerCase();list=list.filter(t=>(t.name+' '+t.desc).toLowerCase().includes(q));}
   return list;
@@ -886,7 +889,7 @@ function viewTx(){
    ${S.tags.length&&list.length&&(ui.q||ui.fcat||ui.fmonth||ui.facc||ui.ftag)?`<div class="bulk"><label for="bulktag">Alle ${list.length} een label geven:</label>
      <select id="bulktag">${S.tags.map(n=>`<option>${esc(n)}</option>`).join('')}</select><button class="btn-small" data-act="bulktag">Toevoegen</button><button class="btn-small" data-act="bulkuntag">Weghalen</button></div>`:''}
    ${list.length&&list.length<=200&&(ui.q||ui.fcat||ui.fmonth||ui.facc||ui.ftag)?`<div class="bulk"><span>Alle ${list.length}:</span>${list.every(t=>S.oneoff[t.id])?`<button class="btn-small" data-act="bulkoneoff0">Niet meer eenmalig</button>`:`<button class="btn-small" data-act="bulkoneoff1">Markeer als eenmalig</button>`}</div>`:''}
-   ${ui.fromDate?`<div class="row"><span class="chip">Vanaf ${fmtD(ui.fromDate)}</span><button class="btn-small" data-act="clearfrom">Alle datums</button></div>`:''}
+   ${ui.fromDate||ui.fmerch?`<div class="row">${ui.fmerch?`<span class="chip">${esc(ui.fmerch)}</span>`:''}${ui.fromDate?`<span class="chip">${fmtD(ui.fromDate)}${ui.toDate?' – '+fmtD(ui.toDate):' en later'}</span>`:''}<button class="btn-small" data-act="clearfrom">Filter wissen</button></div>`:''}
    <div class="spread"><span class="note">${list.length} transacties · saldo <span class="num">${eur.format(total)}</span></span>
      ${uncats&&ui.fcat!=='Overig'?`<button class="btn-small" data-act="showOverig">${uncats} nog in “Overig”</button>`:''}</div>
    <div class="card" style="padding-block:4px"><div class="txlist">
@@ -903,6 +906,42 @@ function viewTx(){
    </div></div>
    ${list.length>ui.limit?`<button data-act="more">Toon meer (${list.length-ui.limit} over)</button>`:''}
   </div>`;
+}
+
+/* ---------- Winkels: nette naam per bedrijf ---------- */
+const CHAINS=['albert heijn','jumbo','lidl','aldi','plus','dirk','coop','hoogvliet','vomar','spar','ekoplaza','picnic','etos','kruidvat','hema','action','blokker','xenos','primark','zeeman','wibra','ikea','gamma','praxis','karwei','hornbach','intratuin','bol.com','coolblue','zalando','amazon','temu','wehkamp','mediamarkt','thuisbezorgd','uber eats','deliveroo','mcdonald','burger king','kfc','starbucks','domino','new york pizza','febo','la place','bagels & beans','ns','shell','esso','bp','tango','tinq','texaco','q-park','apotheek','pets place','welkoop','jumper','intertoys','bart smit','dille & kamille','tk maxx','h&m','c&a','decathlon','ici paris','douglas','rituals','netflix','spotify','vodafone','odido','kpn','ziggo','efteling','pathe','kinepolis'];
+const PREFIX=/^(ccv|sumup|zettle|bck|sns|mollie|adyen|pay\.nl|stripe|worldline|ingenico|ccv\s*pay|myp|tikkie)\s*[*_]+\s*/i;
+const MERCH=new Map();
+function merchantName(t){
+  const raw=(t.name||t.desc||'').trim(); if(MERCH.has(raw)) return MERCH.get(raw);
+  let n=raw.replace(PREFIX,'').replace(/^paypal.*?\*\s*/i,'');
+  const low=' '+n.toLowerCase().replace(/[^\p{L}\d&.' ]/gu,' ')+' ';
+  let out=null;
+  for(const c of CHAINS){ if(low.includes(' '+c+' ')||low.startsWith(' '+c)){ out=c; break; } }
+  if(out) out=out.replace(/\b\p{L}/gu,ch=>ch.toUpperCase()).replace(/bol\.com/i,'bol.com').replace('Mcdonald',"McDonald's").replace('Ns','NS').replace('Hema','HEMA').replace('Ikea','IKEA').replace('Kpn','KPN').replace('Bp','BP').replace('H&m','H&M').replace('C&a','C&A');
+  else { const w=n.replace(/\d+/g,' ').replace(/[*_#]/g,' ').replace(/\b(b\.?v\.?|n\.?v\.?|bv|nv|vof|holding|nederland|nl|filiaal|winkel|store)\b/gi,' ').replace(/\s+/g,' ').trim().split(' ');
+    out=w.filter(x=>/[\p{L}\d]/u.test(x)).slice(0,3).join(' ')||raw; if(out===out.toUpperCase()&&out.length>3) out=out.toLowerCase().replace(/\b\p{L}/gu,ch=>ch.toUpperCase()); }
+  MERCH.set(raw,out); return out;
+}
+function merchantList(txs){
+  const g={};
+  for(const t of txs){ if(IGNORE.has(t.cat)||SAVING.has(t.cat)||(t.amount>0&&INCOME.has(t.cat))) continue;
+    const m=merchantName(t); const o=g[m]||(g[m]={name:m,sum:0,n:0,cats:{},last:t.date}); o.sum-=t.amount; if(t.amount<0)o.n++; o.cats[t.cat]=(o.cats[t.cat]||0)-t.amount; if(t.date>o.last)o.last=t.date; }
+  return Object.values(g).filter(o=>o.sum>=0.5).sort((a,b)=>b.sum-a.sum).map(o=>({...o,cat:Object.entries(o.cats).sort((a,b)=>b[1]-a[1])[0][0]}));
+}
+function merchantCard(txsAll,title,sub,key){
+  const fixed=new Set(recurring().map(r=>r.key)); const hideFixed=ui.merchFixed!==true;
+  const txs=hideFixed?txsAll.filter(t=>!fixed.has(normName(t.name)||normName(t.desc))):txsAll;
+  const L=merchantList(txs); if(!L.length&&!hideFixed) return '';
+  const max=L[0].sum, tot=L.reduce((a,o)=>a+o.sum,0); const show=ui.merchAll===key?L:L.slice(0,12);
+  return `<div class="card stack"><div class="spread"><div><h2>${title}</h2>${sub?`<p class="sub">${sub}</p>`:''}</div><span class="num out">${eur0.format(tot)}</span></div>
+    <div class="catbars">${show.map(o=>`<button class="catbar" data-act="merch" data-m="${esc(o.name)}" data-from="${txs.length?txs.reduce((a,t)=>t.date<a?t.date:a,'9999'):''}" data-to="${txs.length?txs.reduce((a,t)=>t.date>a?t.date:a,'0000'):''}">
+      <span class="name"><span class="dot" style="background:${catColor(o.cat)}"></span><span>${esc(o.name)} <span class="note">${o.n}×</span></span></span>
+      <span class="track"><span class="fill" style="width:${(o.sum/max*100).toFixed(1)}%;background:${catColor(o.cat)}"></span></span>
+      <span class="num">${eur.format(o.sum)}</span></button>`).join('')}</div>
+    <div class="row">${L.length>12?`<button class="btn-small" data-act="merchall" data-k="${key}">${ui.merchAll===key?'Minder tonen':`Alle ${L.length} tonen`}</button>`:''}
+      <button class="btn-small" data-act="merchfixed">${hideFixed?'Vaste lasten ook tonen':'Vaste lasten verbergen'}</button></div>
+    <p class="note">De kleur is de categorie. Tik op een winkel voor de losse betalingen.${hideFixed?' Vaste lasten zoals huur en verzekeringen staan er niet bij.':''}</p></div>`;
 }
 
 /* ---------- Meer ---------- */
@@ -950,7 +989,8 @@ function viewNu(){
   const gaps=sd.slice(1).map((d,i)=>daysBetween(sd[i],d)).filter(g=>g>20&&g<40);
   const nextSal=lastSal?addDays(lastSal,Math.round(gaps.length?median(gaps):30)):null;
   if(ui.win==='sal'&&!lastSal) ui.win='14';
-  const from=ui.win==='sal'?lastSal:addDays(lastData,-(+ui.win)+1);
+  const curP=periodOf(lastData);
+  const from=ui.win==='sal'?lastSal:ui.win==='maand'?(curP?curP.start:lastData.slice(0,8)+'01'):addDays(lastData,-(+ui.win)+1);
   const salName=(payerCandidates().find(x=>x.key===salaryKey())||{}).name||'salaris';
   // saldo's
   const B=accountBalances();
@@ -997,7 +1037,7 @@ function viewNu(){
   const coming=[...rec,...pl].sort((a,b)=>a.date.localeCompare(b.date)); const comingTot=coming.reduce((a,c)=>a+c.amount,0);
   const spendBal=accRows.filter(r=>spendSet.has(r.i)).reduce((a,r)=>a+r.end,0);
   const free=spendBal-comingTot; const stale=accRows.filter(r=>daysBetween(r.last,lastData)>3); const daysLeft=nextSal?Math.max(1,daysBetween(lastData,nextSal)):null;
-  const winLabel=ui.win==='sal'?`sinds ${esc(salName)} op ${fmtD(from)}`:`de afgelopen ${ui.win==='14'?'2 weken':'4 weken'}`;
+  const winLabel=ui.win==='sal'?`sinds ${esc(salName)} op ${fmtD(from)}`:ui.win==='maand'?`deze maand (vanaf ${fmtD(from)})`:`de afgelopen ${ui.win==='14'?'2 weken':'4 weken'}`;
   const jordyMissing=!S.sample&&!ui.acc&&Object.values(S.accounts).filter(a=>a.type==='betaal').length<2;
   return `<div class="stack">
    <div class="spread"><span class="note">Laatste transactie: <b>${fmtD(lastData)} ${lastData.slice(0,4)}</b>${daysBetween(lastData,todayISO())>3?` · <span class="warn">laad een nieuw afschrift in voor de stand van vandaag</span>`:''}</span><div class="row">${scopeSelect()}</div></div>
@@ -1025,6 +1065,7 @@ function viewNu(){
    <div class="chips" role="group" aria-label="Periode">
      ${lastSal?`<button data-act="win" data-v="sal" aria-pressed="${ui.win==='sal'}">Sinds salaris (${fmtD(lastSal)})</button>`:''}
      <button data-act="win" data-v="14" aria-pressed="${ui.win==='14'}">2 weken</button>
+     <button data-act="win" data-v="maand" aria-pressed="${ui.win==='maand'}">Deze maand</button>
      <button data-act="win" data-v="28" aria-pressed="${ui.win==='28'}">4 weken</button></div>
 
    ${(()=>{
@@ -1048,6 +1089,7 @@ function viewNu(){
      <p class="note">Tik op een groep om te zien wat erin zit, en daarna op een regel voor de transacties.${hasBal&&Math.abs(gap)>=5?' Het verschil met je echte saldo komt meestal door transacties die nog niet zijn ingeladen.':''}</p>
      </div>`;})()}
 
+   ${merchantCard(win,'Per winkel',winLabel[0].toUpperCase()+winLabel.slice(1)+'.','nu')}
    <div class="card stack"><h2>Uitgaven per dag</h2>${dayChart}<p class="note">Lichter = weekend. ${Math.max(0,...perDay)>0?`Hoogste dag: ${eur0.format(Math.max(...perDay))} op ${fmtD(days[perDay.indexOf(Math.max(...perDay))])}.`:'Geen uitgaven in deze periode.'}</p></div>
 
    <div class="card stack"><h2>Grootste uitgaven</h2>
@@ -1723,18 +1765,20 @@ function viewSettings(){
    </div>
   </div>`;
 }
+const DBX_APP_KEY='hsdn64hn88xwk1i'; // App key van de eigen Dropbox-app (geen geheim; werkt alleen met de ingestelde Redirect URI)
 function dropboxPanel(redirect){
   if(IN_FRAME) return `<p class="note">Dropbox werkt in de versie op GitHub Pages, niet in deze voorbeeldweergave. Daar staat je Kasboek dan automatisch in je eigen Dropbox, zodat je laptop en telefoon hetzelfde zien.</p>`;
   if(dbxConnected()) return `<div class="row"><span class="status ${D.syncErr?'err':'ok'}"><i></i>${D.syncErr?esc(D.syncErr):'Gekoppeld'+(D.lastSync?' · laatst gesynchroniseerd '+new Date(D.lastSync).toLocaleString('nl-NL',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'')}</span></div>
      <p class="note">Wijzigingen gaan vanzelf naar <span class="num">Apps/&lt;naam van je app&gt;/kasboek.json</span> in je Dropbox. Bij het openen haalt Kasboek de nieuwste versie op en voegt die samen.${getPw()?' Het bestand is versleuteld.':' Tip: zet hieronder de vergrendeling aan, dan is het bestand versleuteld.'}</p>
      <div class="row"><button class="btn-primary" data-act="dbxsync">Nu synchroniseren</button><button data-act="dbxoff">Ontkoppelen</button></div>`;
-  return `<p class="note">Koppel je eigen Dropbox, dan synchroniseert Kasboek tussen je apparaten. Eenmalig instellen:</p>
-   <ol class="steps"><li>Ga op je computer naar <a href="https://www.dropbox.com/developers/apps" target="_blank" rel="noopener">dropbox.com/developers/apps</a> en kies <b>Create app</b>.</li>
-   <li>Kies <b>Scoped access</b> en <b>App folder</b>, en geef hem een naam, bijv. <b>Kasboek-Serena</b>.</li>
-   <li>Tab <b>Permissions</b>: vink <b>files.content.write</b> en <b>files.content.read</b> aan en klik <b>Submit</b>.</li>
-   <li>Tab <b>Settings</b>, bij <b>OAuth 2 → Redirect URIs</b>: voeg dit adres toe:<div class="codebox" style="margin-top:4px">${esc(redirect)}</div></li>
-   <li>Kopieer de <b>App key</b> van die pagina en plak hem hieronder.</li></ol>
-   <div class="row"><input id="dbxkey" placeholder="App key" value="${esc(D.dbxKey)}" aria-label="Dropbox App key" autocomplete="off"><button class="btn-primary" data-act="dbxconnect">Koppelen</button></div>`;
+  return `<p class="note">Koppel je Dropbox, dan synchroniseert Kasboek tussen je apparaten. Je logt in bij Dropbox en tikt daar op "Toestaan".</p>
+   <div><button class="btn-primary" data-act="dbxconnect">Koppelen met Dropbox</button></div>
+   <details><summary class="note">Werkt het koppelen niet?</summary>
+     <div class="stack-s" style="margin-top:8px"><p class="note">Controleer in je Dropbox-app (dropbox.com/developers/apps → Settings → OAuth 2 → Redirect URIs) dat dit adres erin staat:</p>
+     <div class="codebox">${esc(redirect)}</div>
+     <p class="note">Gebruik je een andere Dropbox-app? Plak dan hier de App key:</p>
+     <div class="row"><input id="dbxkey" placeholder="App key" value="${esc(D.dbxKey&&D.dbxKey!==DBX_APP_KEY?D.dbxKey:'')}" aria-label="Dropbox App key" autocomplete="off"><button data-act="dbxconnect">Koppelen met deze key</button></div></div>
+   </details>`;
 }
 
 /* ---------- Versleuteling & back-up ---------- */
@@ -1764,7 +1808,7 @@ function cleanState(o){const s={...clone(DEFAULT_STATE),...o};s.period={...DEFAU
 const dbxConnected=()=>!!(D.dbxKey&&D.dbxRefresh);
 function b64url(u8){return b64(u8).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 async function dbxConnect(){
-  const key=($('#dbxkey')?.value||'').trim(); if(!key){toast('Plak eerst de App key.');return;}
+  const key=($('#dbxkey')?.value||'').trim()||DBX_APP_KEY;
   D.dbxKey=key; saveDevice();
   const verifier=b64url(crypto.getRandomValues(new Uint8Array(48)));
   const challenge=b64url(new Uint8Array(await crypto.subtle.digest('SHA-256',te.encode(verifier))));
@@ -1863,7 +1907,7 @@ async function copyText(text,fallbackId){
   try{await navigator.clipboard.writeText(text);toast('Gekopieerd.');}
   catch(e){const el=document.getElementById(fallbackId); if(el){el.focus();el.select();} toast('Kopiëren lukte niet automatisch. De tekst staat geselecteerd.');}
 }
-function goTab(t){ui.tab=t;if(t!=='transacties')ui.fromDate='';D.tab=t;saveDevice();ui.wipe=false;ui.restore=false;render();window.scrollTo(0,0);}
+function goTab(t){ui.tab=t;if(t!=='transacties'){ui.fromDate='';ui.toDate='';ui.fmerch='';}D.tab=t;saveDevice();ui.wipe=false;ui.restore=false;render();window.scrollTo(0,0);}
 document.querySelector('nav.tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(b)goTab(b.dataset.tab);});
 document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act]'); if(!b) return; const a=b.dataset.act; const ms=months();
@@ -1884,7 +1928,10 @@ document.addEventListener('click',async e=>{
     if(!cat&&!tg){toast('Kies een categorie, een label, of allebei.');return;}
     const n=addRule({match:m,dir:$('#r-dir').value,cat,tags:tg?[tg]:[]});toast(n?`Regel toegevoegd, geldt voor ${n} transacties.`:'Regel toegevoegd, maar er is nog geen transactie die erop lijkt. Controleer de tekst.');}
   if(a==='scopeall'){ui.acc='';ui.tag='';ui.month=null;render();}
-  if(a==='clearfrom'){ui.fromDate='';render();}
+  if(a==='clearfrom'){ui.fromDate='';ui.toDate='';ui.fmerch='';render();}
+  if(a==='merch'){ui.tab='transacties';ui.fmerch=b.dataset.m;ui.fromDate=b.dataset.from;ui.toDate=b.dataset.to;ui.q='';ui.fcat='';ui.ftag='';ui.fmonth='';ui.facc=ui.acc;ui.limit=150;render();window.scrollTo(0,0);}
+  if(a==='merchfixed'){ui.merchFixed=!ui.merchFixed;render();}
+  if(a==='merchall'){ui.merchAll=ui.merchAll===b.dataset.k?'':b.dataset.k;render();}
   if(a==='spendtoggle'){const ac=S.accounts[b.dataset.iban];if(ac){ac.spend=ac.spend===false?true:false;save();render();}}
   if(a==='dismiss'){S.dismissed={...(S.dismissed||{}),[b.dataset.key]:todayISO()};save();render();}
   if(a==='todo-overig'){ui.tab='transacties';ui.fcat='Overig';ui.fmonth='';ui.ftag='';ui.q='';ui.facc='';ui.fromDate=addDays(TX[0].date,-60);ui.limit=150;render();window.scrollTo(0,0);}

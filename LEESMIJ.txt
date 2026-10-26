@@ -1,12 +1,11 @@
-Kasboek — versie 2026-10-12o
+Kasboek — versie 2026-10-26a
 
 UPDATEN
 Upload alle bestanden uit deze map over de oude heen in je GitHub-repository.
 
-NIEUW: zelf bepalen wat een vaste last is (Meer > Vaste lasten)
-- Bij elke vaste last: "Geen vaste last" (bijv. IKEA), of kies hoe vaak hij komt.
-- "Mis je een vaste last?": zoek een betaling en kies Maandelijks / Kwartaal / Jaarlijks.
-- Uitgezette betalingen staan onderaan en kun je terugzetten.
-- Ook op Nu kun je in "Vaste lasten deze maand" op "geen vaste last" tikken.
-- Wisselende bedragen tellen alleen nog als vaste last als het een incasso is
-  (dus niet meer winkels waar je zelf betaalt).
+NIEUW
+- Je Dropbox App key zit nu in Kasboek ingebouwd.
+  Instellingen > Dropbox > "Koppelen met Dropbox" — inloggen bij Dropbox, "Toestaan", klaar.
+  Op elk nieuw apparaat hetzelfde, zonder key te zoeken.
+- Werkt het niet? Onder "Werkt het koppelen niet?" staat het adres dat in je Dropbox-app
+  bij Redirect URIs moet staan.
