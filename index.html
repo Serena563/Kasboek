@@ -246,7 +246,7 @@ ol.steps{margin:6px 0 0;padding-left:1.2em;color:var(--muted);font-size:.9rem;di
 <div id="toast" class="toast" hidden></div>
 
 <script>
-const VERSION='2026-11-06b';
+const VERSION='2026-11-06c';
 const clone=o=>JSON.parse(JSON.stringify(o));
 /* ---------- Basis ---------- */
 const STORE='kasboek.v1', LOCAL='kasboek.device';
@@ -1198,16 +1198,29 @@ const nf0=new Intl.NumberFormat('nl-NL',{maximumFractionDigits:0});
 const GCOL={'Vaste lasten':'#2F6E9E','Dagelijks':'#C9822B','Vrije uitgaven':'#C25C8E','Overig':'#9AA6A2','Buiten':'#8E7CA8'};
 const GNAME={'Overig':'Nog niet ingedeeld','Buiten':'Naar rekeningen buiten Kasboek'};
 const up10=v=>Math.ceil(v/10)*10;
+function accCoverage(){
+  return Object.entries(COV).filter(([i,c])=>!isSaveAcc(S.accounts[i])).map(([i,c])=>({i,label:(S.accounts[i]||{}).label||i,min:c.min,max:c.max,n:c.n})).sort((a,b)=>b.n-a.n);
+}
 function fullMonths(){
-  if(!TX.length) return [];
+  if(!TX.length) return {ms:[],late:[]};
   const lastData=TX[0].date;
-  // pas tellen vanaf het moment dat alle (betaal)rekeningen erin staan
-  const starts=Object.entries(COV).filter(([i,c])=>!isSaveAcc(S.accounts[i])&&c.n>=20).map(([i,c])=>c.min).sort();
-  const from=starts.length?starts[starts.length-1]:TX[TX.length-1].date;
-  return months().filter(k=>PIDX[k]&&PIDX[k].end<lastData&&PIDX[k].start>=addDays(from,-3));
+  const accs=accCoverage().filter(a=>a.n>=20);
+  const full=from=>months().filter(k=>PIDX[k]&&PIDX[k].end<lastData&&PIDX[k].start>=addDays(from,-3));
+  // liefst alleen maanden waarin alle rekeningen erin staan
+  const latest=accs.length?accs.map(a=>a.min).sort().pop():TX[TX.length-1].date;
+  let ms=full(latest), late=[];
+  if(ms.length<3){ const earliest=accs.length?accs.map(a=>a.min).sort()[0]:TX[TX.length-1].date; ms=full(earliest); late=accs.filter(a=>daysBetween(earliest,a.min)>20); }
+  return {ms,late};
+}
+function coverageCard(open){
+  const rows=accCoverage(); if(!rows.length) return '';
+  const sv=Object.entries(COV).filter(([i])=>isSaveAcc(S.accounts[i]));
+  return `<details class="card stack" ${open?'open':''}><summary><b>Wat er is ingeladen</b> <span class="note">${rows.length} betaalrekening${rows.length>1?'en':''}${sv.length?`, ${sv.length} spaarrekening${sv.length>1?'en':''}`:''}</span></summary>
+    <div style="margin-top:8px">${rows.map(r=>`<div class="rec"><div style="min-width:0"><b>${esc(r.label)}</b><div class="meta">${esc(r.i)} · ${r.n} transacties</div></div><div class="amt note">${fmtD(r.min)} '${r.min.slice(2,4)} – ${fmtD(r.max)} '${r.max.slice(2,4)}</div></div>`).join('')}</div>
+    <p class="note">Van wanneer tot wanneer er per rekening transacties in Kasboek staan. Dit is wat er nu op dit apparaat (en in Dropbox) staat. Ontbreekt er een periode, laad dan dat afschrift opnieuw in; dubbele transacties slaat Kasboek over.</p></details>`;
 }
 function gewoonData(){
-  const all=fullMonths(); const N=Math.min(ui.gn||12,all.length); const sel=all.slice(-N); const set=new Set(sel);
+  const fm=fullMonths(); const all=fm.ms; const N=Math.min(ui.gn||12,all.length); const sel=all.slice(-N); const set=new Set(sel);
   const inc={}, cat={}, perMonth={}; let saved=0, toSav=0, fromSav=0, nTo=0, nFrom=0;
   sel.forEach(k=>perMonth[k]={inc:0,out:0,cat:{}});
   for(const t of TX){ if(!set.has(t.mk)||!inScope(t)) continue; if(ui.gno&&S.oneoff[t.id]) continue;
@@ -1226,7 +1239,7 @@ function gewoonData(){
   const order=['Vaste lasten','Dagelijks','Vrije uitgaven','Overig','Buiten'];
   const G=order.filter(g=>groups[g]&&Math.abs(groups[g].v)>=1).map(g=>{groups[g].cats.sort((a,b)=>b.v-a.v);return groups[g];});
   const incTot=incL.reduce((a,x)=>a+x.v,0), outTot=G.reduce((a,x)=>a+x.v,0);
-  return {all,sel,N,incL:top,incTot,G,outTot,over:incTot-outTot,saved:avg(saved),toSav:avg(toSav),fromSav:avg(fromSav),nTo,nFrom,perMonth,cat:Object.fromEntries(Object.entries(cat).map(([c,v])=>[c,avg(v)]))};
+  return {all,late:fm.late,sel,N,incL:top,incTot,G,outTot,over:incTot-outTot,saved:avg(saved),toSav:avg(toSav),fromSav:avg(fromSav),nTo,nFrom,perMonth,cat:Object.fromEntries(Object.entries(cat).map(([c,v])=>[c,avg(v)]))};
 }
 function periodChips(d){
   const opts=[3,6,12].filter(n=>n<d.all.length); if(d.all.length) opts.push(Math.min(24,d.all.length));
@@ -1236,7 +1249,7 @@ function periodChips(d){
 }
 function viewGewoon(){
   const d=gewoonData();
-  if(!d.N) return `<div class="card stack"><h2>Een gewone maand</h2><p>Hiervoor is minstens één hele maand aan afschriften nodig. Laad een afschrift in dat een hele maand beslaat.</p></div>`;
+  if(!d.N) return `<div class="stack"><div class="card stack"><h2>Een gewone maand</h2><p>Hiervoor is minstens één hele maand aan afschriften nodig. Hieronder zie je wat er nu is ingeladen.</p></div>${coverageCard(true)}</div>`;
   const p0=PIDX[d.sel[0]], p1=PIDX[d.sel[d.sel.length-1]];
   const max=Math.max(1,d.incTot,...d.G.map(g=>g.v));
   const from=p0.start;
@@ -1271,6 +1284,7 @@ function viewGewoon(){
        <div><h3>Blijft over</h3><div class="num ${over<0?'out':'in'}">${fmtSign(over)}</div></div></div>
      <p>${say}</p>
      ${savSay?`<p class="note">${savSay}</p>`:''}
+     ${d.late.length?`<p class="warn">${d.late.map(a=>esc(a.label)+' staat er pas in vanaf '+fmtD(a.min)+' '+a.min.slice(0,4)).join('; ')}. In de maanden daarvoor mist die rekening, dus daar kloppen de bedragen minder goed.</p>`:''}
    </div>
 
    ${own.length?`<div class="card stack"><h3>Is dit een rekening van jullie?</h3>
@@ -1311,6 +1325,7 @@ function viewGewoon(){
        <span class="bonbar" style="display:flex;justify-content:${r.v<0?'flex-end':'flex-start'};background:none"><span style="width:${(Math.abs(r.v)/mmax*50).toFixed(1)}%;background:${r.v<0?'var(--out)':'var(--in)'};${r.v<0?'margin-right:50%':'margin-left:50%'}"></span></span></div>`).join('')}</div>
      <p class="note">Wat er per maand overbleef (binnen min uit, zonder spaargeld). Maanden met een grote losse uitgave springen eruit. Zie je er een die je niet wilt meetellen? Markeer die uitgave bij Transacties als eenmalig.</p>
    </div>
+   ${coverageCard(!!d.late.length)}
   </div>`;
 }
 
