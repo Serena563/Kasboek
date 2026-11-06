@@ -5,26 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Kasboek</title>
-<meta name="theme-color" content="#1F6F66">
+<meta name="theme-color" content="#171B22">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: één kolom, tabbladen bovenaan, kaarten alleen waar iets apart moet staan; cijfers in mono */
 :root{
-  --bg:#F1F4F2; --surface:#FFFFFF; --ink:#17302B; --muted:#5D6E69; --line:#D9E2DE;
-  --accent:#1F6F66; --accent-soft:#DCEDE8; --in:#2E7A4D; --out:#B0523A; --out-soft:#F6E2DB; --warn:#9A6614; --warn-soft:#F6EBD6;
-  --f-display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
-  --f-body:"Figtree", "Segoe UI", system-ui, sans-serif;
-  --f-num:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  --r:12px;
+  --bg:#F2F3F6; --surface:#FFFFFF; --ink:#1E2430; --muted:#626B7A; --line:#E3E6EC;
+  --accent:#3E5CA8; --accent-soft:#E8EDF8; --in:#2C7A50; --out:#B24A5B; --out-soft:#F7E6E9; --warn:#8C620F; --warn-soft:#F6EEDC;
+  --f-display:"Figtree", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --f-body:"Figtree", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --f-num:"Figtree", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --r:16px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0F1816; --surface:#16211E; --ink:#E4EDEA; --muted:#93A6A0; --line:#28362F;
-  --accent:#5DB6A9; --accent-soft:#1C3430; --in:#6BC28C; --out:#E3896C; --out-soft:#3A2420; --warn:#E0B062; --warn-soft:#33291A; color-scheme:dark}}
+  --bg:#171B22; --surface:#1F242D; --ink:#ECE9E3; --muted:#A0A6B0; --line:#2D333D;
+  --accent:#9DB3E8; --accent-soft:#27304A; --in:#8FCBA0; --out:#E79DA7; --out-soft:#3A262B; --warn:#E6C07A; --warn-soft:#3A3122; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0F1816; --surface:#16211E; --ink:#E4EDEA; --muted:#93A6A0; --line:#28362F;
-  --accent:#5DB6A9; --accent-soft:#1C3430; --in:#6BC28C; --out:#E3896C; --out-soft:#3A2420; --warn:#E0B062; --warn-soft:#33291A; color-scheme:dark}
+  --bg:#171B22; --surface:#1F242D; --ink:#ECE9E3; --muted:#A0A6B0; --line:#2D333D;
+  --accent:#9DB3E8; --accent-soft:#27304A; --in:#8FCBA0; --out:#E79DA7; --out-soft:#3A262B; --warn:#E6C07A; --warn-soft:#3A3122; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
 .wrap{max-width:860px;margin:0 auto;padding-inline:16px;padding-block:18px 90px}
@@ -216,6 +216,70 @@ details.card summary{cursor:pointer;list-style-position:outside}
 .empty{color:var(--muted);text-align:center;padding:20px 0}
 ol.steps{margin:6px 0 0;padding-left:1.2em;color:var(--muted);font-size:.9rem;display:flex;flex-direction:column;gap:4px}
 @media (prefers-reduced-motion:no-preference){.catbar .fill,.progress span{transition:width .4s ease}}
+/* ---- Rustige laag (nov 2026): één letter, zachte kaarten, geen hoofdletterlabels ---- */
+body{font-size:15.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:720px;padding-inline:18px;padding-block:22px 96px}
+.num,.stat .v,.tx .a,.wf .amt,.bonrow .num,.yt th,.yt td{font-variant-numeric:tabular-nums lining-nums;font-feature-settings:"tnum" 1}
+h1{font-weight:700;font-size:1.75rem;letter-spacing:-.015em}
+h2{font-weight:600;font-size:1.12rem;letter-spacing:-.005em}
+h3{text-transform:none;letter-spacing:0;font-size:.86rem;font-weight:500;color:var(--muted)}
+.yt thead th{text-transform:none;letter-spacing:0;font-size:.78rem;font-weight:500}
+.bonhead{text-transform:none;letter-spacing:0;font-size:.9rem;font-weight:600;color:var(--ink);padding:18px 4px 6px}
+.bonhead .note{font-weight:400}
+.card{border:none;border-radius:var(--r);padding:20px;box-shadow:0 1px 0 var(--line)}
+.stack{gap:16px}
+.rec{padding:12px 0}
+.note{font-size:.84rem;line-height:1.5}
+.sub{font-size:.9rem}
+.big{font-weight:700;letter-spacing:-.025em}
+.btn-primary{color:var(--surface)}
+.chips button[aria-pressed=true],.seg button[aria-pressed=true]{color:var(--surface)}
+nav.tabs{margin:20px 0 18px;gap:4px;border-bottom:none;padding-bottom:2px}
+nav.tabs button{padding:8px 14px;border-radius:999px;border:none;font-weight:500}
+nav.tabs button[aria-selected=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 0 var(--line);font-weight:600;border-bottom:none}
+.bonbar{height:5px;background:var(--line)}
+.bonitems{background:transparent;border-left:2px solid var(--line);margin-left:4px;padding-left:14px}
+.bongrp>summary:hover,.bonrow.sub:hover{background:transparent;color:var(--accent)}
+.bonrow.end{border-top:1.5px solid var(--ink)}
+.potbox h3{margin-bottom:2px}
+.potbox .num{font-size:1.15rem;font-weight:600}
+.pill{border-color:var(--line);font-size:.74rem}
+.chip{background:var(--accent-soft);color:var(--ink)}
+input,select,textarea{border-radius:10px}
+/* uitleg die is weggevouwen */
+details.why{margin-top:2px}
+details.why>summary{list-style:none;cursor:pointer;color:var(--muted);font-size:.84rem;display:inline-flex;align-items:center;gap:6px}
+details.why>summary::-webkit-details-marker{display:none}
+details.why>summary::before{content:"i";display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;border:1px solid var(--muted);font-size:.7rem;font-weight:600;font-style:normal}
+details.why[open]>summary{margin-bottom:8px}
+details.why .note{margin-top:6px}
+/* ingeklapte onderdelen op Nu */
+details.fold{background:var(--surface);border-radius:var(--r);box-shadow:0 1px 0 var(--line)}
+details.fold>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 20px;font-weight:600}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary::after{content:"›";color:var(--muted);font-size:1.2rem;transition:transform .15s}
+details.fold[open]>summary::after{transform:rotate(90deg)}
+details.fold>summary .note{font-weight:400;margin-left:auto}
+details.fold>.card{box-shadow:none;padding-top:0}
+details.fold>.card>h2:first-child,details.fold>.card>.spread:first-child>h2,details.fold>.card>div:first-child>h2{display:none}
+/* het ene grote moment: wat je nog vrij hebt */
+.hero{padding:26px 22px 22px}
+.hero .lead{font-size:1.02rem;color:var(--muted);margin:0}
+.hero .free{font-size:clamp(2.6rem,11vw,3.6rem);font-weight:700;letter-spacing:-.035em;line-height:1;margin:6px 0 10px;font-variant-numeric:tabular-nums}
+.hero .free.neg{color:var(--out)}
+.hero .say{font-size:1.02rem;max-width:34em}
+.hero .facts{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.hero .facts div{display:flex;flex-direction:column}
+.hero .facts span{font-size:.82rem;color:var(--muted)}
+.hero .facts b{font-weight:600;font-size:1.02rem;font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:640px){
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;margin:0;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));gap:2px;background:var(--surface);box-shadow:0 -1px 0 var(--line);overflow:visible}
+  nav.tabs button{flex:1 1 0;min-width:0;padding:8px 2px;font-size:.78rem;line-height:1.2;white-space:normal;text-align:center;border-radius:12px}
+  nav.tabs button[aria-selected=true]{background:var(--accent-soft);box-shadow:none}
+  .wrap{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+}
 </style>
 </head>
 <body>
@@ -236,7 +300,6 @@ ol.steps{margin:6px 0 0;padding-left:1.2em;color:var(--muted);font-size:.9rem;di
     <button role="tab" data-tab="nu" aria-selected="true">Nu</button>
     <button role="tab" data-tab="gewoon">Een gewone maand</button>
     <button role="tab" data-tab="besparen">Besparen</button>
-    <button role="tab" data-tab="inzicht">Inzicht</button>
     <button role="tab" data-tab="transacties">Transacties</button>
     <button role="tab" data-tab="meer">Meer</button>
   </nav>
@@ -246,7 +309,7 @@ ol.steps{margin:6px 0 0;padding-left:1.2em;color:var(--muted);font-size:.9rem;di
 <div id="toast" class="toast" hidden></div>
 
 <script>
-const VERSION='2026-11-06i';
+const VERSION='2026-11-06j';
 const clone=o=>JSON.parse(JSON.stringify(o));
 /* ---------- Basis ---------- */
 const STORE='kasboek.v1', LOCAL='kasboek.device';
@@ -281,7 +344,7 @@ const DEFAULT_RULES=[
  ['amazon.com services','in','Royalties'],['amazon.com services, llc','in','Royalties'],['amazon australia','in','Royalties'],['amazon asia','in','Royalties'],['amazon media','in','Royalties'],['amazon digital','in','Royalties'],['amazon services','in','Royalties'],['amazon mexico','in','Royalties'],['amazon japan','in','Royalties'],['amazon.co','in','Royalties'],['amazon kdp','in','Royalties'],
  ['tantor','in','Royalties'],['audible','in','Royalties'],['acx','in','Royalties'],['findaway','in','Royalties'],['storytel','in','Royalties'],['bookwire','in','Royalties'],['streetlib','in','Royalties'],['smashwords','in','Royalties'],['lulu','in','Royalties'],['ingramspark','in','Royalties'],
  ['geldmaat','out','Contant opgenomen'],['cash machine','out','Contant opgenomen'],
- ['ing deposit','in','Contant opgenomen'],['storting','in','Contant opgenomen'],
+ ['ing deposit','in','Contant gespaard'],['storting','in','Contant gespaard'],
  ['argenta','out','Wonen'],['hyp ','out','Wonen'],['hypothe','out','Wonen'],
  ['ziektekosten','out','Verzekeringen'],['zorgverzeker','out','Verzekeringen'],['asr ','out','Verzekeringen'],['veldsink','out','Verzekeringen'],['nationale-nederlanden','out','Verzekeringen'],['unive','out','Verzekeringen'],
  ['duo ','out','Studieschuld & leningen'],['duo hoofdrekening','out','Studieschuld & leningen'],
@@ -762,6 +825,18 @@ function goalMonthly(g){
 }
 
 /* ---------- Weergave ---------- */
+/* Lange uitleg per kaart wegvouwen achter "Uitleg", zodat eerst de cijfers te zien zijn */
+function foldNotes(root){
+  root.querySelectorAll('.card').forEach(card=>{
+    if(card.closest('.lockbox')) return;
+    const notes=[...card.querySelectorAll(':scope > p.note, :scope > .stack > p.note, :scope > div[style] > p.note')].filter(n=>
+      !n.classList.contains('keep')&&!n.querySelector('button,input,select,a,label')&&!n.closest('details:not(.card):not(.fold)')&&n.textContent.trim().length>110);
+    if(!notes.length) return;
+    const d=document.createElement('details'); d.className='why';
+    d.innerHTML='<summary>Uitleg</summary>';
+    notes[0].before(d); notes.forEach(n=>d.appendChild(n));
+  });
+}
 function render(){
   if(LOCKED){renderLock();return;}
   const lh=$('#lockhdr'); if(lh) lh.hidden=!LK;
@@ -774,6 +849,7 @@ function render(){
   if(!TX.length&&ui.tab!=='instellingen'&&ui.tab!=='meer'){v.innerHTML=emptyView();return;}
   const back=inMore?`<div style="margin-bottom:10px"><button class="btn-link" data-act="tab" data-tab="meer">← Meer</button> <span class="note">· ${MORE.find(m=>m[0]===ui.tab)[1]}</span></div>`:'';
   v.innerHTML=back+{meer:viewMeer,nu:viewNu,overzicht:viewOverzicht,jaar:viewJaar,inzicht:viewInzicht,gewoon:viewGewoon,besparen:viewBesparen,transacties:viewTx,vast:viewVast,doelen:viewDoelen,belasting:viewTax,instellingen:viewSettings}[ui.tab]();
+  foldNotes(v);
 }
 function renderSync(){
   $('#syncline').innerHTML=dbxConnected()?`<span class="status ${D.syncErr?'err':'ok'}"><i></i>${D.syncErr?'Dropbox: niet gesynchroniseerd':'Dropbox'+(D.lastSync?' · '+new Date(D.lastSync).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):'')}</span>`:'Alles blijft op je eigen apparaat.';
@@ -985,7 +1061,7 @@ function merchantCard(txsAll,title,sub,key){
 }
 
 /* ---------- Meer ---------- */
-const MORE=[['overzicht','Maand','Eén maand in detail: per categorie, budgetten en labels.'],
+const MORE=[['inzicht','Inzicht','Saldo door de tijd, spaaradvies en de controle of alles klopt.'],['overzicht','Maand','Eén maand in detail: per categorie, budgetten en labels.'],
   ['jaar','Jaar','Alle maanden naast elkaar in één tabel, per categorie en per label.'],
   ['vast','Vaste lasten','Abonnementen en vaste betalingen, en wat er duurder werd.'],
   ['doelen','Sparen & plannen','Geplande uitgaven, contante spaarpot, spaardoelen en budgetten.'],
@@ -1083,24 +1159,28 @@ function viewNu(){
    <div class="spread"><span class="note">Laatste transactie: <b>${fmtD(lastData)} ${lastData.slice(0,4)}</b>${daysBetween(lastData,todayISO())>3?` · <span class="warn">laad een nieuw afschrift in voor de stand van vandaag</span>`:''}</span><div class="row">${scopeSelect()}</div></div>
    ${ui.acc?`<div class="row"><span class="chip">Alleen ${esc((S.accounts[ui.acc]||{}).label||'')}</span><button class="btn-small" data-act="scopeall">Alles tonen</button></div>`:''}
 
-   ${(()=>{const todo=todoList({lastData,lastSal,nextSal,accRows,free,daysLeft});
-     return `<div class="card stack" style="border-color:var(--accent)"><h2>Deze week</h2>
-       ${todo.length?`<div>${todo.map(t=>`<div class="todo"><div class="tt">${t.text}</div><div class="tb">${t.btn}<button class="btn-small" data-act="dismiss" data-key="${esc(t.key)}" title="Gedaan, niet meer tonen">✓ Gedaan</button></div></div>`).join('')}</div>`
-       :'<p>Niets te doen. Alles is bijgewerkt.</p>'}
-     </div>`;})()}
-   <div class="card stack"><h3>Op de rekening${accRows.length>1?'en':''}</h3>
-     ${hasBal?`<div class="big ${endBal<0?'out':''}">${eur.format(endBal)}</div>
-     <div>${accRows.map(r=>{const st=daysBetween(r.last,lastData)>3||daysBetween(r.last,todayISO())>3;const on=spendSet.has(r.i);return `<div class="rec"><div style="min-width:0"><b>${esc(r.label)}</b>
-        <div class="meta ${st?'warn':''}">stand op ${fmtD(r.last)} ${r.last.slice(0,4)}${daysBetween(r.last,lastData)>3?' · ouder dan de andere rekeningen, laad een nieuw afschrift in':daysBetween(r.last,todayISO())>3?' · niet van vandaag':''}</div></div>
-        <div class="amt"><div class="num ${r.end<0?'out':''}">${eur.format(r.end)}</div>${accRows.length>1?`<button class="tagchip ${on?'on':'add'}" style="margin-top:4px;${on?'border-color:var(--in)':''}" data-act="spendtoggle" data-iban="${esc(r.i)}" aria-pressed="${on}">${on?'✓ telt mee':'telt niet mee'}</button>`:''}</div></div>`;}).join('')}</div>
-     ${nextSal&&nextSal>lastData?`<div class="potbox" style="margin-top:4px">
-       <div><h3>Gaat nog af vóór ${fmtD(nextSal)}</h3><div class="num out">− ${eur0.format(comingTot)}</div></div>
-       <div><h3>Nog vrij te besteden${spendSet.size<accRows.length?` <span style="text-transform:none;letter-spacing:0">(${[...spendSet].map(i=>esc((S.accounts[i]||{}).label||'')).join(' + ')})</span>`:''}</h3><div class="num ${free<0?'out':'in'}">${eur0.format(free)}</div></div>
-       <div><h3>Per dag tot salaris</h3><div class="num ${free<0?'out':''}">${eur.format(free/daysLeft)}</div></div></div>`:''}`
-     :'<p class="note">Deze bestanden hebben geen saldo-kolom. Download de CSV opnieuw uit Mijn ING; daar staat "Saldo na mutatie" standaard in.</p>'}
-     ${accRows.length>1?'<p class="note">"Vrij te besteden" = het saldo van de rekeningen die meetellen, min wat er nog afgaat vóór je salaris. Zet de vaste-lastenrekening op <i>telt niet mee</i> als dat geld al bestemd is voor de vaste lasten.</p>':''}
-     ${jordyMissing?'<p class="note">Jordy\'s rekening staat er nog niet in. Wat hij betaalt of overmaakt zie je alleen als het via jullie rekeningen loopt.</p>':''}
-   </div>
+   ${hasBal?(()=>{
+     const multi=accRows.length>1; const sal=nextSal&&nextSal>lastData;
+     const who=spendSet.size<accRows.length?[...spendSet].map(i=>esc((S.accounts[i]||{}).label||'')).join(' + '):'';
+     const accList=`<details class="why" style="margin-top:12px"><summary>Per rekening${who?` · telt mee: ${who}`:''}</summary>
+       <div>${accRows.map(r=>{const st=daysBetween(r.last,lastData)>3||daysBetween(r.last,todayISO())>3;const on=spendSet.has(r.i);return `<div class="rec"><div style="min-width:0"><b>${esc(r.label)}</b>
+        <div class="meta ${st?'warn':''}">stand op ${fmtD(r.last)} ${r.last.slice(0,4)}${daysBetween(r.last,lastData)>3?', ouder dan de andere rekeningen':''}</div></div>
+        <div class="amt"><div class="num ${r.end<0?'out':''}">${eur.format(r.end)}</div>${multi?`<button class="tagchip ${on?'on':'add'}" style="margin-top:4px" data-act="spendtoggle" data-iban="${esc(r.i)}" aria-pressed="${on}">${on?'✓ telt mee':'telt niet mee'}</button>`:''}</div></div>`;}).join('')}</div>
+       ${multi?'<p class="note" style="margin-top:8px">"Nog vrij" is het saldo van de rekeningen die meetellen, min wat er nog afgaat vóór je salaris. Zet de vaste-lastenrekening op <i>telt niet mee</i> als dat geld al bestemd is.</p>':''}
+       ${jordyMissing?'<p class="note">Jordy\'s rekening staat er nog niet in.</p>':''}</details>`;
+     if(sal) return `<div class="card hero">
+       <p class="lead">Nog vrij te besteden tot je salaris op ${fmtD(nextSal)}</p>
+       <div class="free ${free<0?'neg':''}">${eur0.format(free)}</div>
+       <p class="say">${free>=0?`Dat is ongeveer <b>${eur.format(free/daysLeft)}</b> per dag, voor ${daysLeft} ${daysLeft===1?'dag':'dagen'}.`:`Er gaat tot je salaris meer af dan er nu op staat. Kijk bij <i>Vaste lasten deze maand</i> wat er nog komt.`}</p>
+       <div class="facts"><div><span>Op de rekening${multi?'en':''}</span><b>${eur0.format(endBal)}</b></div><div><span>Gaat nog af</span><b>${eur0.format(comingTot)}</b></div></div>
+       ${accList}</div>`;
+     return `<div class="card hero"><p class="lead">Op de rekening${multi?'en':''}</p><div class="free ${endBal<0?'neg':''}">${eur0.format(endBal)}</div>${accList}</div>`;
+   })():'<div class="card"><p class="note">Deze bestanden hebben geen saldo-kolom. Download de CSV opnieuw uit Mijn ING; daar staat "Saldo na mutatie" standaard in.</p></div>'}
+
+   ${(()=>{const todo=todoList({lastData,lastSal,nextSal,accRows,free,daysLeft}); if(!todo.length) return '';
+     const row=t=>`<div class="todo"><div class="tt">${t.text}</div><div class="tb">${t.btn}<button class="btn-small" data-act="dismiss" data-key="${esc(t.key)}" title="Gedaan, niet meer tonen">✓ Gedaan</button></div></div>`;
+     return `<div class="card"><h2>Deze week</h2><div>${todo.slice(0,2).map(row).join('')}</div>
+       ${todo.length>2?`<details class="why"><summary>Nog ${todo.length-2} ${todo.length-2===1?'ding':'dingen'}</summary><div>${todo.slice(2).map(row).join('')}</div></details>`:''}</div>`;})()}
 
    <div class="chips" role="group" aria-label="Periode">
      ${lastSal?`<button data-act="win" data-v="sal" aria-pressed="${ui.win==='sal'}">Sinds salaris (${fmtD(lastSal)})</button>`:''}
@@ -1111,7 +1191,7 @@ function viewNu(){
    ${(()=>{
      const SPEND=['Vaste lasten','Dagelijks','Vrije uitgaven','Overig'];
      const label={'Overig':'Nog niet ingedeeld','Opzij gezet':'Opzij gezet'};
-     const gc={'Binnen':'var(--in)','Vaste lasten':'#2F6E9E','Dagelijks':'#C9822B','Vrije uitgaven':'#C25C8E','Overig':'#9AA6A2','Opzij gezet':'var(--accent)','Andere rekeningen':'var(--muted)'};
+     const gc={'Binnen':'var(--in)',...GCOL,'Opzij gezet':'var(--accent)','Andere rekeningen':'var(--muted)'};
      const G={};
      for(const g of lines){ const grp=g.sum>0&&!SAVING.has(g.cat)&&g.key!=='__own'?'Binnen':SAVING.has(g.cat)?'Opzij gezet':(g.key==='__own'||g.cat==='Overboeking eigen rekening')?'Andere rekeningen':groupOf(g.cat);
        (G[grp]=G[grp]||{name:grp,sum:0,items:[]}); G[grp].sum+=g.sum; G[grp].items.push(g); }
@@ -1152,13 +1232,11 @@ function viewNu(){
      <p class="note">Tik op een groep om te zien wat erin zit, en daarna op een regel voor de transacties.</p>
      </div>`;})()}
 
-   ${merchantCard(win,'Per winkel',winLabel[0].toUpperCase()+winLabel.slice(1)+'.','nu')}
-   <div class="card stack"><h2>Uitgaven per dag</h2>${dayChart}<p class="note">Lichter = weekend. ${Math.max(0,...perDay)>0?`Hoogste dag: ${eur0.format(Math.max(...perDay))} op ${fmtD(days[perDay.indexOf(Math.max(...perDay))])}.`:'Geen uitgaven in deze periode.'}</p></div>
-
-   <div class="card stack"><h2>Grootste uitgaven</h2>
-     <div>${bigTx.map(t=>`<div class="rec"><div style="min-width:0"><b>${esc(t.name||t.desc)}</b><span class="pill">${esc(t.cat)}</span><div class="meta">${fmtD(t.date)}${Object.keys(COV).length>1?' · '+esc((S.accounts[normIban(t.account)]||{}).label||''):''}</div></div><div class="amt num out">${eur.format(-t.amount)}</div></div>`).join('')||'<p class="note">Geen uitgaven in deze periode.</p>'}</div></div>
-
-   ${billsCard(lastData,lastSal,nextSal,accRows,spendSet)}
+   <details class="fold"><summary>Per winkel</summary>${merchantCard(win,'Per winkel',winLabel[0].toUpperCase()+winLabel.slice(1)+'.','nu')}</details>
+   <details class="fold"><summary>Uitgaven per dag</summary><div class="card stack"><h2>Uitgaven per dag</h2>${dayChart}<p class="note">Lichter = weekend. ${Math.max(0,...perDay)>0?`Hoogste dag: ${eur0.format(Math.max(...perDay))} op ${fmtD(days[perDay.indexOf(Math.max(...perDay))])}.`:'Geen uitgaven in deze periode.'}</p></div></details>
+   <details class="fold"><summary>Grootste uitgaven</summary><div class="card stack"><h2>Grootste uitgaven</h2>
+     <div>${bigTx.map(t=>`<div class="rec"><div style="min-width:0"><b>${esc(t.name||t.desc)}</b><span class="pill">${esc(t.cat)}</span><div class="meta">${fmtD(t.date)}${Object.keys(COV).length>1?' · '+esc((S.accounts[normIban(t.account)]||{}).label||''):''}</div></div><div class="amt num out">${eur.format(-t.amount)}</div></div>`).join('')||'<p class="note">Geen uitgaven in deze periode.</p>'}</div></div></details>
+   ${(()=>{const bc=billsCard(lastData,lastSal,nextSal,accRows,spendSet);return bc?`<details class="fold"><summary>Vaste lasten deze maand</summary>${bc}</details>`:'';})()}
    ${coming.length&&false?`<div class="card stack"><div class="spread"><h2>Gaat nog af${nextSal&&nextSal>lastData?` vóór ${fmtD(nextSal)}`:''}</h2><span class="num out">− ${eur0.format(comingTot)}</span></div>
      <div>${coming.map(c=>`<div class="rec"><div style="min-width:0"><b>${esc(c.name)}</b><div class="meta">rond ${fmtD(c.date)}</div></div><div class="amt num">${eur.format(c.amount)}</div></div>`).join('')}</div>
      <p class="note">Geschat uit eerdere afschrijvingen en je geplande uitgaven.</p></div>`:''}
@@ -1204,7 +1282,7 @@ const GROUPS=[['Vaste lasten',['Wonen','Energie & water','Internet & telefoon','
 function groupOf(c){for(const [g,l] of GROUPS) if(l.includes(c)) return g; return 'Overig';}
 const nf0=new Intl.NumberFormat('nl-NL',{maximumFractionDigits:0});
 /* ---------- Een gewone maand & Besparen ---------- */
-const GCOL={'Vaste lasten':'#2F6E9E','Dagelijks':'#C9822B','Vrije uitgaven':'#C25C8E','Overig':'#9AA6A2','Buiten':'#8E7CA8'};
+const GCOL={'Vaste lasten':'#7C97D1','Dagelijks':'#C9A66B','Vrije uitgaven':'#C48AA3','Overig':'#8B929C','Buiten':'#9C8FBF'};
 const GNAME={'Overig':'Nog niet ingedeeld','Buiten':'Naar rekeningen buiten Kasboek'};
 const up10=v=>Math.ceil(v/10)*10;
 function accCoverage(){
@@ -1284,7 +1362,7 @@ function viewGewoon(){
   const monthRows=d.sel.map(k=>{const m=d.perMonth[k];return {k,v:m.inc-m.out};});
   const mmax=Math.max(1,...monthRows.map(r=>Math.abs(r.v)));
   return `<div class="stack">
-   <div class="card stack" style="border-color:var(--accent)">
+   <div class="card stack">
      <div><h2>Een gewone maand</h2><p class="sub">Het gemiddelde van ${d.N===1?'één maand':d.N+' maanden'}: ${p0.name} t/m ${p1.name}.</p></div>
      ${periodChips(d)}
      <div class="potbox">
@@ -1292,12 +1370,12 @@ function viewGewoon(){
        <div><h3>Gaat uit</h3><div class="num out">${eur0.format(d.outTot)}</div></div>
        <div><h3>Blijft over</h3><div class="num ${over<0?'out':'in'}">${fmtSign(over)}</div></div></div>
      <p>${say}</p>
-     ${savSay?`<p class="note">${savSay}</p>`:''}
+     ${savSay?`<p class="note keep">${savSay}</p>`:''}
      ${d.late.length?`<p class="warn">${d.late.map(a=>esc(a.label)+' staat er pas in vanaf '+fmtD(a.min)+' '+a.min.slice(0,4)).join('; ')}. In de maanden daarvoor mist die rekening, dus daar kloppen de bedragen minder goed.</p>`:''}
    </div>
 
    ${own.length?`<div class="card stack"><h3>Is dit een rekening van jullie?</h3>
-     <p class="note">Hier gaat elke maand geld heen. Is het een eigen rekening (bijvoorbeeld van Jordy), dan zet Kasboek het apart als <i>naar rekeningen buiten Kasboek</i>, in plaats van tussen de uitgaven.</p>
+     <p class="note keep">Hier gaat elke maand geld heen. Is het een eigen rekening (bijvoorbeeld van Jordy), dan zet Kasboek het apart als <i>naar rekeningen buiten Kasboek</i>, in plaats van tussen de uitgaven.</p>
      ${own.map(c=>`<div class="rec"><div style="min-width:0"><b>${esc(c.name)}</b><div class="meta">${esc(c.ib)} · gemiddeld ${eur0.format(c.sum/d.N)} per maand</div></div>
        <div class="amt row" style="justify-content:flex-end"><button class="btn-small" data-act="gown" data-iban="${esc(c.ib)}" data-name="${esc(c.name)}">Ja, eigen rekening</button><button class="btn-small" data-act="gownno" data-iban="${esc(c.ib)}">Nee</button></div></div>`).join('')}
    </div>`:''}
@@ -1405,7 +1483,7 @@ function viewBesparen(){
   const ov=(d.cat['Overig']||0); if(ov>=100) tips.push(`<b>Eerst indelen.</b> Er staat gemiddeld ${eur0.format(ov)} per maand in <i>nog niet ingedeeld</i>. Hoe kleiner dat is, hoe beter je ziet waar je op kunt besparen. <button class="btn-link" data-act="todo-overig">Nu indelen</button>`);
   if(tips.length) parts.push(`<div class="card stack"><h2>Tips uit jullie eigen cijfers</h2><div class="stack-s">${tips.map(t=>`<p>${t}</p>`).join('')}</div></div>`);
   return `<div class="stack">
-    <div class="card stack" style="border-color:var(--accent)"><div><h2>Besparen</h2><p class="sub">Op basis van ${d.N===1?'één maand':d.N+' maanden'}: ${PIDX[d.sel[0]].name} t/m ${PIDX[d.sel[d.sel.length-1]].name}.</p></div>
+    <div class="card stack"><div><h2>Besparen</h2><p class="sub">Op basis van ${d.N===1?'één maand':d.N+' maanden'}: ${PIDX[d.sel[0]].name} t/m ${PIDX[d.sel[d.sel.length-1]].name}.</p></div>
       ${periodChips(d)}
       <p class="note">Ideeën, geen regels. Kies wat bij jullie past.</p></div>
     ${parts.join('')||'<div class="card"><p>Nog niet genoeg gegevens voor ideeën.</p></div>'}
@@ -1473,7 +1551,7 @@ function viewJaar(){
     const k=payerKey(t)||'?'; const o=pay[k]||(pay[k]={name:t.name||t.desc,n:0,sum:0,cat:t.cat}); o.n++; o.sum-=t.amount; }
   const top=Object.values(pay).sort((a,b)=>b.sum-a.sum).slice(0,12);
   const gShare=grpNames.filter(g=>grpTot[g]).map(g=>[g,grpTot[g]]);
-  const gCol={'Vaste lasten':'#2F6E9E','Dagelijks':'#C9822B','Vrije uitgaven':'#C25C8E','Overig':'#9AA6A2'};
+  const gCol=GCOL;
   const title=ui.yr==='12'?'Laatste 12 maanden':ui.yr;
   return `<div class="stack">
    <div class="spread"><select id="yr" aria-label="Periode">${years.slice().reverse().map(y=>`<option value="${y}" ${String(y)===ui.yr?'selected':''}>${y}</option>`).join('')}<option value="12" ${ui.yr==='12'?'selected':''}>Laatste 12 maanden</option></select>
