@@ -144,6 +144,9 @@ table.yt{border-collapse:separate;border-spacing:0;font-size:.84rem;width:100%}
 .bonbar{grid-column:1 / -1;height:6px;background:var(--accent-soft);border-radius:3px;overflow:hidden}
 .bonbar span{display:block;height:100%;border-radius:3px}
 .bonitems{padding:2px 0 6px 20px;background:var(--bg)}
+.bonhead{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:16px 4px 4px;font-weight:600;font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);border-bottom:1px solid var(--line)}
+.bonhead .num{font-size:1rem;text-transform:none;letter-spacing:0;font-family:var(--f-num)}
+.bonhint{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 8px 6px}
 .bonrow.sub{padding:7px 8px;font-size:.92rem;cursor:pointer}
 .bonrow.sub:hover{background:var(--accent-soft)}
 .wf{display:flex;flex-direction:column;gap:2px}
@@ -241,7 +244,7 @@ ol.steps{margin:6px 0 0;padding-left:1.2em;color:var(--muted);font-size:.9rem;di
 <div id="toast" class="toast" hidden></div>
 
 <script>
-const VERSION='2026-10-26a';
+const VERSION='2026-11-06a';
 const clone=o=>JSON.parse(JSON.stringify(o));
 /* ---------- Basis ---------- */
 const STORE='kasboek.v1', LOCAL='kasboek.device';
@@ -1055,7 +1058,7 @@ function viewNu(){
         <div class="amt"><div class="num ${r.end<0?'out':''}">${eur.format(r.end)}</div>${accRows.length>1?`<button class="tagchip ${on?'on':'add'}" style="margin-top:4px;${on?'border-color:var(--in)':''}" data-act="spendtoggle" data-iban="${esc(r.i)}" aria-pressed="${on}">${on?'✓ telt mee':'telt niet mee'}</button>`:''}</div></div>`;}).join('')}</div>
      ${nextSal&&nextSal>lastData?`<div class="potbox" style="margin-top:4px">
        <div><h3>Gaat nog af vóór ${fmtD(nextSal)}</h3><div class="num out">− ${eur0.format(comingTot)}</div></div>
-       <div><h3>Vrij te besteden${spendSet.size<accRows.length?` <span style="text-transform:none;letter-spacing:0">(${[...spendSet].map(i=>esc((S.accounts[i]||{}).label||'')).join(' + ')})</span>`:''}</h3><div class="num ${free<0?'out':'in'}">${eur0.format(free)}</div></div>
+       <div><h3>Nog vrij te besteden${spendSet.size<accRows.length?` <span style="text-transform:none;letter-spacing:0">(${[...spendSet].map(i=>esc((S.accounts[i]||{}).label||'')).join(' + ')})</span>`:''}</h3><div class="num ${free<0?'out':'in'}">${eur0.format(free)}</div></div>
        <div><h3>Per dag tot salaris</h3><div class="num ${free<0?'out':''}">${eur.format(free/daysLeft)}</div></div></div>`:''}`
      :'<p class="note">Deze bestanden hebben geen saldo-kolom. Download de CSV opnieuw uit Mijn ING; daar staat "Saldo na mutatie" standaard in.</p>'}
      ${accRows.length>1?'<p class="note">"Vrij te besteden" = het saldo van de rekeningen die meetellen, min wat er nog afgaat vóór je salaris. Zet de vaste-lastenrekening op <i>telt niet mee</i> als dat geld al bestemd is voor de vaste lasten.</p>':''}
@@ -1069,24 +1072,47 @@ function viewNu(){
      <button data-act="win" data-v="28" aria-pressed="${ui.win==='28'}">4 weken</button></div>
 
    ${(()=>{
-     const G={}; const order=['Binnen','Vaste lasten','Dagelijks','Vrij besteedbaar','Overig','Opzij gezet','Andere rekeningen'];
-     const gc={'Binnen':'var(--in)','Vaste lasten':'#2F6E9E','Dagelijks':'#C9822B','Vrij besteedbaar':'#C25C8E','Overig':'#9AA6A2','Opzij gezet':'var(--accent)','Andere rekeningen':'var(--muted)'};
+     const SPEND=['Vaste lasten','Dagelijks','Vrije uitgaven','Overig'];
+     const label={'Overig':'Nog niet ingedeeld','Opzij gezet':'Opzij gezet'};
+     const gc={'Binnen':'var(--in)','Vaste lasten':'#2F6E9E','Dagelijks':'#C9822B','Vrije uitgaven':'#C25C8E','Overig':'#9AA6A2','Opzij gezet':'var(--accent)','Andere rekeningen':'var(--muted)'};
+     const G={};
      for(const g of lines){ const grp=g.sum>0&&!SAVING.has(g.cat)&&g.key!=='__own'?'Binnen':SAVING.has(g.cat)?'Opzij gezet':(g.key==='__own'||g.cat==='Overboeking eigen rekening')?'Andere rekeningen':groupOf(g.cat);
        (G[grp]=G[grp]||{name:grp,sum:0,items:[]}); G[grp].sum+=g.sum; G[grp].items.push(g); }
-     const groupsL=order.filter(n=>G[n]&&Math.abs(G[n].sum)>=1).map(n=>G[n]);
-     const gmax=Math.max(1,...groupsL.map(g=>Math.abs(g.sum)));
+     if(G['Andere rekeningen']) label['Andere rekeningen']=G['Andere rekeningen'].sum<0?'Naar je andere rekeningen':'Van je andere rekeningen';
+     const spendG=SPEND.filter(n=>G[n]&&Math.abs(G[n].sum)>=1).map(n=>G[n]);
+     const moveG=['Opzij gezet','Andere rekeningen'].filter(n=>G[n]&&Math.abs(G[n].sum)>=1).map(n=>G[n]);
+     const spent=-spendG.reduce((a,g)=>a+g.sum,0);
+     const gmax=Math.max(1,...[G['Binnen'],...spendG,...moveG].filter(Boolean).map(g=>Math.abs(g.sum)));
      const fmtS=v=>`${v>=0?'+':'−'} ${eur0.format(Math.abs(v))}`;
+     const fmtSpend=v=>v<=0?eur0.format(-v):`${eur0.format(v)} terug`;
+     const items=(g,fmt)=>g.items.sort((x,y)=>Math.abs(y.sum)-Math.abs(x.sum)).map(it=>`<button class="bonrow sub" data-act="nucat" data-cat="${esc(it.cat)}" data-from="${from}"><span>${esc(it.label)} <span class="note">${it.n}×</span></span><span class="num">${fmt(it.sum)}</span></button>`).join('');
+     const grpRow=(g,amt,cls,extra='')=>`<details class="bongrp"><summary class="bonrow"><span class="nm"><span class="dot" style="background:${gc[g.name]}"></span><span>${label[g.name]||g.name}</span><span class="chev" aria-hidden="true">›</span></span>
+           <span class="num ${cls}">${amt}</span>
+           <span class="bonbar"><span style="width:${(Math.abs(g.sum)/gmax*100).toFixed(1)}%;background:${gc[g.name]}"></span></span></summary>
+         <div class="bonitems">${extra}${items(g,g.name==='Binnen'||moveG.includes(g)?fmtS:fmtSpend)}</div></details>`;
+     // verschil per rekening uitzoeken
+     const accSet=new Set(accRows.map(r=>r.i));
+     const gapRows=accRows.map(r=>{const sum=win.filter(t=>normIban(t.account)===r.i).reduce((a,t)=>a+t.amount,0);return {label:r.label,d:r.end-(r.start+sum)};}).filter(x=>Math.abs(x.d)>=5);
+     const noBal=win.filter(t=>!accSet.has(normIban(t.account))).reduce((a,t)=>a+t.amount,0);
+     const showGap=hasBal&&Math.abs(gap)>=5;
      return `<div class="card stack"><div><h2>Waar het geld heen ging</h2><p class="sub">${winLabel[0].toUpperCase()+winLabel.slice(1)}.</p></div>
      <div class="bon">
-       ${hasBal?`<div class="bonrow tot"><span>Saldo op ${fmtD(prevDay)}</span><span class="num">${eur0.format(startBal)}</span></div>`:''}
-       ${groupsL.map(g=>`<details class="bongrp"><summary class="bonrow"><span class="nm"><span class="dot" style="background:${gc[g.name]}"></span><span>${g.name}</span><span class="chev" aria-hidden="true">›</span></span>
-           <span class="num ${g.sum>0?'in':g.name==='Opzij gezet'?'':'out'}">${fmtS(g.sum)}</span>
-           <span class="bonbar"><span style="width:${(Math.abs(g.sum)/gmax*100).toFixed(1)}%;background:${gc[g.name]}"></span></span></summary>
-         <div class="bonitems">${g.items.sort((x,y)=>Math.abs(y.sum)-Math.abs(x.sum)).map(it=>`<button class="bonrow sub" data-act="nucat" data-cat="${esc(it.cat)}" data-from="${from}"><span>${esc(it.label)} <span class="note">${it.n}×</span></span><span class="num">${fmtS(it.sum)}</span></button>`).join('')}</div></details>`).join('')}
-       ${hasBal&&Math.abs(gap)>=5?`<div class="bonrow"><span class="note">Verschil met je echte saldo</span><span class="num note">${fmtS(gap)}</span></div>`:''}
-       ${hasBal?`<div class="bonrow tot end"><span>Saldo nu</span><span class="num ${endBal<0?'out':''}">${eur0.format(endBal)}</span></div>`:''}
+       ${hasBal?`<div class="bonrow tot"><span>Op de rekening op ${fmtD(prevDay)}</span><span class="num">${eur0.format(startBal)}</span></div>`:''}
+       ${G['Binnen']?grpRow(G['Binnen'],fmtS(G['Binnen'].sum),'in'):''}
+       ${spendG.length?`<div class="bonhead"><span>Uitgegeven</span><span class="num out">${spent>=0?'− ':'+ '}${eur0.format(Math.abs(spent))}</span></div>
+         ${spendG.map(g=>grpRow(g,fmtSpend(g.sum),g.sum>0?'in':'',g.name==='Overig'?`<div class="bonhint"><span class="note">Kasboek wist niet waar deze uitgaven bij horen.</span><button class="btn-small" data-act="todo-overig">Indelen</button></div>`:'')).join('')}`:''}
+       ${moveG.length?`<div class="bonhead"><span>Verplaatst <span class="note" style="font-weight:400">· niet uitgegeven</span></span><span></span></div>
+         ${moveG.map(g=>grpRow(g,fmtS(g.sum),'')).join('')}`:''}
+       ${showGap?`<details class="bongrp"><summary class="bonrow"><span class="nm"><span class="dot" style="background:var(--warn,#C9822B)"></span><span>Kan Kasboek niet verklaren</span><span class="chev" aria-hidden="true">›</span></span><span class="num note">${fmtS(gap)}</span></summary>
+         <div class="bonitems stack-s" style="padding:8px 8px 10px 20px">
+           <p class="note">Je echte saldo is ${eur0.format(Math.abs(gap))} ${gap>0?'hoger':'lager'} dan wat de ingeladen transacties optellen. Dat komt bijna altijd doordat er ${gap>0?'bijschrijvingen':'afschrijvingen'} ontbreken: een afschrift dat niet helemaal aansluit op het vorige.</p>
+           ${gapRows.map(x=>`<div class="spread"><span>${esc(x.label)}</span><span class="num">${fmtS(x.d)}</span></div>`).join('')}
+           ${Math.abs(noBal)>=5?`<div class="spread"><span>Rekeningen zonder saldo in het bestand</span><span class="num">${fmtS(-noBal)}</span></div>`:''}
+           <p class="note">Download bij ING de transacties van de rekening${gapRows.length>1?'en':''} hierboven opnieuw, vanaf een week vóór ${fmtD(from)}, en laad ze in. Dubbele transacties slaat Kasboek vanzelf over.</p>
+         </div></details>`:''}
+       ${hasBal?`<div class="bonrow tot end"><span>Op de rekening nu</span><span class="num ${endBal<0?'out':''}">${eur0.format(endBal)}</span></div>`:''}
      </div>
-     <p class="note">Tik op een groep om te zien wat erin zit, en daarna op een regel voor de transacties.${hasBal&&Math.abs(gap)>=5?' Het verschil met je echte saldo komt meestal door transacties die nog niet zijn ingeladen.':''}</p>
+     <p class="note">Tik op een groep om te zien wat erin zit, en daarna op een regel voor de transacties.</p>
      </div>`;})()}
 
    ${merchantCard(win,'Per winkel',winLabel[0].toUpperCase()+winLabel.slice(1)+'.','nu')}
@@ -1137,7 +1163,7 @@ function billsCard(lastData,lastSal,nextSal,accRows,spendSet){
 /* ---------- Jaaroverzicht ---------- */
 const GROUPS=[['Vaste lasten',['Wonen','Energie & water','Internet & telefoon','Verzekeringen','Abonnementen','Belastingen']],
   ['Dagelijks',['Boodschappen','Vervoer','Kinderen','Huisdieren','Gezondheid']],
-  ['Vrij besteedbaar',['Uit eten','Vakantie & uitjes','Winkelen','Schrijfkosten','Contant opgenomen']]];
+  ['Vrije uitgaven',['Uit eten','Vakantie & uitjes','Winkelen','Schrijfkosten','Contant opgenomen']]];
 function groupOf(c){for(const [g,l] of GROUPS) if(l.includes(c)) return g; return 'Overig';}
 const nf0=new Intl.NumberFormat('nl-NL',{maximumFractionDigits:0});
 const pYear=k=>PIDX[k]?PIDX[k].year:+k.slice(0,4);
@@ -1201,7 +1227,7 @@ function viewJaar(){
     const k=payerKey(t)||'?'; const o=pay[k]||(pay[k]={name:t.name||t.desc,n:0,sum:0,cat:t.cat}); o.n++; o.sum-=t.amount; }
   const top=Object.values(pay).sort((a,b)=>b.sum-a.sum).slice(0,12);
   const gShare=grpNames.filter(g=>grpTot[g]).map(g=>[g,grpTot[g]]);
-  const gCol={'Vaste lasten':'#2F6E9E','Dagelijks':'#C9822B','Vrij besteedbaar':'#C25C8E','Overig':'#9AA6A2'};
+  const gCol={'Vaste lasten':'#2F6E9E','Dagelijks':'#C9822B','Vrije uitgaven':'#C25C8E','Overig':'#9AA6A2'};
   const title=ui.yr==='12'?'Laatste 12 maanden':ui.yr;
   return `<div class="stack">
    <div class="spread"><select id="yr" aria-label="Periode">${years.slice().reverse().map(y=>`<option value="${y}" ${String(y)===ui.yr?'selected':''}>${y}</option>`).join('')}<option value="12" ${ui.yr==='12'?'selected':''}>Laatste 12 maanden</option></select>
