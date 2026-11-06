@@ -234,6 +234,8 @@ ol.steps{margin:6px 0 0;padding-left:1.2em;color:var(--muted);font-size:.9rem;di
 
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="nu" aria-selected="true">Nu</button>
+    <button role="tab" data-tab="gewoon">Een gewone maand</button>
+    <button role="tab" data-tab="besparen">Besparen</button>
     <button role="tab" data-tab="inzicht">Inzicht</button>
     <button role="tab" data-tab="transacties">Transacties</button>
     <button role="tab" data-tab="meer">Meer</button>
@@ -244,7 +246,7 @@ ol.steps{margin:6px 0 0;padding-left:1.2em;color:var(--muted);font-size:.9rem;di
 <div id="toast" class="toast" hidden></div>
 
 <script>
-const VERSION='2026-11-06a';
+const VERSION='2026-11-06b';
 const clone=o=>JSON.parse(JSON.stringify(o));
 /* ---------- Basis ---------- */
 const STORE='kasboek.v1', LOCAL='kasboek.device';
@@ -262,7 +264,7 @@ const CATS=[
  ['Inkomsten','#3E8E5E'],['Royalties','#7A5CC2'],['Boodschappen','#C9822B'],['Wonen','#2F6E9E'],
  ['Energie & water','#D0A21F'],['Internet & telefoon','#3C9FA8'],['Verzekeringen','#5A7A8C'],['Abonnementen','#C25C8E'],
  ['Vervoer','#8C6A4A'],['Kinderen','#E07A5F'],['Vakantie & uitjes','#3E9CC4'],['Huisdieren','#B07D3A'],['Gezondheid','#4FA37A'],['Uit eten','#D46A3A'],
- ['Winkelen','#9C7BB0'],['Belastingen','#A04848'],['Schrijfkosten','#6A8D3A'],['Contant opgenomen','#7F8C88'],
+ ['Winkelen','#9C7BB0'],['Kleding','#B56A9A'],['Huis & tuin','#7C9A4A'],['Hobby','#5C8FC2'],['Drogist','#D9A05B'],['Sport','#3FA39A'],['Studieschuld & leningen','#8B5A5A'],['Belastingen','#A04848'],['Schrijfkosten','#6A8D3A'],['Contant opgenomen','#7F8C88'],
  ['Sparen','#1F6F66'],['Contant gespaard','#2E8B6E'],['Belastingreservering','#4C6FB0'],['Eigen rekening','#B3BDB9'],['Overboeking eigen rekening','#8E7CA8'],['Overig','#9AA6A2']
 ];
 const SAVING=new Set(['Sparen','Contant gespaard','Belastingreservering']);   // apart zetten, geen uitgave
@@ -274,14 +276,31 @@ const isSaveAcc=a=>a&&(a.type==='spaar'||a.type==='pot');
 
 const DEFAULT_RULES=[
  ['spaarrekening','any','Sparen'],['oranje spaar','any','Sparen'],
+ // specifieke regels eerst
+ ['geldmaat','out','Contant opgenomen'],['cash machine','out','Contant opgenomen'],
+ ['ing deposit','in','Contant gespaard'],['storting','in','Contant gespaard'],
+ ['argenta','out','Wonen'],['hyp ','out','Wonen'],['hypothe','out','Wonen'],
+ ['ziektekosten','out','Verzekeringen'],['zorgverzeker','out','Verzekeringen'],['asr ','out','Verzekeringen'],['veldsink','out','Verzekeringen'],['nationale-nederlanden','out','Verzekeringen'],['unive','out','Verzekeringen'],
+ ['duo ','out','Studieschuld & leningen'],['duo hoofdrekening','out','Studieschuld & leningen'],
+ ['belasting groep','out','Belastingen'],['belasti','out','Belastingen'],['cjib','out','Vervoer'],['yellowbrick','out','Vervoer'],['parkmobile','out','Vervoer'],
+ ['sportfondsen','out','Sport'],['fitness','out','Sport'],['basic-fit','out','Sport'],['sportschool','out','Sport'],['zwemles','out','Sport'],
+ ['kinderdagverblijf','out','Kinderen'],['onderwijs','out','Kinderen'],['smyths','out','Kinderen'],['toys','out','Kinderen'],['speelgoed','out','Kinderen'],
+ ['etos','out','Drogist'],['kruidvat','out','Drogist'],['trekpleister','out','Drogist'],['da drogist','out','Drogist'],['holland & barrett','out','Drogist'],
+ ['hornbach','out','Huis & tuin'],['ikea','out','Huis & tuin'],['praxis','out','Huis & tuin'],['gamma','out','Huis & tuin'],['karwei','out','Huis & tuin'],['intratuin','out','Huis & tuin'],['elektramat','out','Huis & tuin'],['blokker','out','Huis & tuin'],['glasbewassing','out','Huis & tuin'],['glazenwasser','out','Huis & tuin'],['schoonmaker','out','Huis & tuin'],
+ ['c&a','out','Kleding'],['zeeman','out','Kleding'],['primark','out','Kleding'],['h&m','out','Kleding'],['kiabi','out','Kleding'],['wibra','out','Kleding'],['bonprix','out','Kleding'],['schoenen','out','Kleding'],['shoeby','out','Kleding'],['we fashion','out','Kleding'],['vinted','out','Kleding'],['boardriders','out','Kleding'],
+ ['horse nation','out','Hobby'],['hobbii','out','Hobby'],['valve','out','Hobby'],['steam','out','Hobby'],['nintendo','out','Hobby'],['playstation','out','Hobby'],['steekje','out','Hobby'],['gamekeeper','out','Hobby'],['3d b.v','out','Hobby'],
+ ['espresso','out','Uit eten'],['cafetria','out','Uit eten'],['cafetaria','out','Uit eten'],['eetcafe','out','Uit eten'],['snack','out','Uit eten'],['febo','out','Uit eten'],['sodexo','out','Uit eten'],['bagels','out','Uit eten'],['lunchroom','out','Uit eten'],['koffie','out','Uit eten'],['pizza','out','Uit eten'],['blend one','out','Uit eten'],
+ ['klink','out','Boodschappen'],['spar ','out','Boodschappen'],['supermarkt','out','Boodschappen'],['slager','out','Boodschappen'],['bakker','out','Boodschappen'],['marqt','out','Boodschappen'],
+ ['allsafe','out','Wonen'],['opslag','out','Wonen'],['veenema energy','out','Energie & water'],['kwantum','out','Huis & tuin'],['eethuis','out','Uit eten'],['horeca','out','Uit eten'],['parkcafe','out','Uit eten'],['gezondheidswinkel','out','Gezondheid'],['massage','out','Gezondheid'],['kosten ing','out','Abonnementen'],['avia','out','Vervoer'],['curls','out','Drogist'],
+ ['hoftheater','out','Vakantie & uitjes'],['ticketcounter','out','Vakantie & uitjes'],['museumkaart','out','Vakantie & uitjes'],['monkeytown','out','Vakantie & uitjes'],['pathe','out','Vakantie & uitjes'],['kinepolis','out','Vakantie & uitjes'],['dierentuin','out','Vakantie & uitjes'],['24 play','out','Vakantie & uitjes'],['paviljoen','out','Vakantie & uitjes'],
  ['amazon media eu','in','Royalties'],['kindle direct','in','Royalties'],['kdp','in','Royalties'],['draft2digital','in','Royalties'],
  ['kobo','in','Royalties'],['ingram','in','Royalties'],['google payment','in','Royalties'],['books2read','in','Royalties'],['bookfunnel','in','Royalties'],
  ['salaris','in','Inkomsten'],['svb','in','Inkomsten'],['uwv','in','Inkomsten'],['belastingdienst','in','Inkomsten'],
  ['belastingdienst','out','Belastingen'],['gemeente','out','Belastingen'],['waterschap','out','Belastingen'],['hoogheemraadschap','out','Belastingen'],
  ['albert heijn','out','Boodschappen'],['jumbo','out','Boodschappen'],['lidl','out','Boodschappen'],['aldi','out','Boodschappen'],['plus ','out','Boodschappen'],
  ['dirk ','out','Boodschappen'],['hoogvliet','out','Boodschappen'],['picnic','out','Boodschappen'],['ekoplaza','out','Boodschappen'],['vomar','out','Boodschappen'],['coop ','out','Boodschappen'],
- ['hypotheek','out','Wonen'],['huur','out','Wonen'],['woonstichting','out','Wonen'],['vve','out','Wonen'],['ikea','out','Wonen'],['praxis','out','Wonen'],['gamma','out','Wonen'],['karwei','out','Wonen'],
- ['vattenfall','out','Energie & water'],['eneco','out','Energie & water'],['essent','out','Energie & water'],['greenchoice','out','Energie & water'],['vandebron','out','Energie & water'],
+ ['hypotheek','out','Wonen'],['huur','out','Wonen'],['woonstichting','out','Wonen'],['vve','out','Wonen'],
+ ['coolblue energie','out','Energie & water'],['vattenfall','out','Energie & water'],['eneco','out','Energie & water'],['essent','out','Energie & water'],['greenchoice','out','Energie & water'],['vandebron','out','Energie & water'],
  ['budget energie','out','Energie & water'],['dunea','out','Energie & water'],['evides','out','Energie & water'],['vitens','out','Energie & water'],['oxxio','out','Energie & water'],
  ['ziggo','out','Internet & telefoon'],['kpn','out','Internet & telefoon'],['odido','out','Internet & telefoon'],['vodafone','out','Internet & telefoon'],['simyo','out','Internet & telefoon'],['youfone','out','Internet & telefoon'],['lebara','out','Internet & telefoon'],
  ['zilveren kruis','out','Verzekeringen'],['menzis','out','Verzekeringen'],['vgz','out','Verzekeringen'],['zorgverzekeraar','out','Verzekeringen'],['centraal beheer','out','Verzekeringen'],
@@ -289,14 +308,14 @@ const DEFAULT_RULES=[
  ['netflix','out','Abonnementen'],['spotify','out','Abonnementen'],['disney','out','Abonnementen'],['videoland','out','Abonnementen'],['apple.com','out','Abonnementen'],['youtube','out','Abonnementen'],
  ['audible','out','Abonnementen'],['storytel','out','Abonnementen'],['kindle unlimited','out','Abonnementen'],['patreon','out','Abonnementen'],['anthropic','out','Abonnementen'],['openai','out','Abonnementen'],['microsoft','out','Abonnementen'],['adobe','out','Abonnementen'],['dropbox','out','Abonnementen'],
  ['squarespace','out','Schrijfkosten'],['canva','out','Schrijfkosten'],['github','out','Schrijfkosten'],['bookbrush','out','Schrijfkosten'],['scrivener','out','Schrijfkosten'],
- ['ns groep','out','Vervoer'],['ns reizigers','out','Vervoer'],['ov-chipkaart','out','Vervoer'],['translink','out','Vervoer'],['htm','out','Vervoer'],['shell','out','Vervoer'],['esso','out','Vervoer'],
+ ['ns groep','out','Vervoer'],['ns reizigers','out','Vervoer'],['ov-chipkaart','out','Vervoer'],['translink','out','Vervoer'],['htm','out','Vervoer'],['shell','out','Vervoer'],['esso ','out','Vervoer'],
  ['tinq','out','Vervoer'],['tango','out','Vervoer'],['texaco','out','Vervoer'],['q-park','out','Vervoer'],['parkeren','out','Vervoer'],['anwb','out','Vervoer'],
  ['kinderopvang','out','Kinderen'],['bso','out','Kinderen'],['intertoys','out','Kinderen'],['bart smit','out','Kinderen'],['school','out','Kinderen'],
  ['camping','out','Vakantie & uitjes'],['booking.com','out','Vakantie & uitjes'],['airbnb','out','Vakantie & uitjes'],['hotel','out','Vakantie & uitjes'],['center parcs','out','Vakantie & uitjes'],['landal','out','Vakantie & uitjes'],['roompot','out','Vakantie & uitjes'],['efteling','out','Vakantie & uitjes'],['transavia','out','Vakantie & uitjes'],['klm ','out','Vakantie & uitjes'],['tui ','out','Vakantie & uitjes'],['corendon','out','Vakantie & uitjes'],['dierentuin','out','Vakantie & uitjes'],['blijdorp','out','Vakantie & uitjes'],['pathe','out','Vakantie & uitjes'],['kinepolis','out','Vakantie & uitjes'],
  ['dierenarts','out','Huisdieren'],['dierenkliniek','out','Huisdieren'],['pets place','out','Huisdieren'],['zooplus','out','Huisdieren'],['jumper','out','Huisdieren'],['welkoop','out','Huisdieren'],['petsplace','out','Huisdieren'],
  ['apotheek','out','Gezondheid'],['tandarts','out','Gezondheid'],['huisarts','out','Gezondheid'],['fysio','out','Gezondheid'],
  ['thuisbezorgd','out','Uit eten'],['uber eats','out','Uit eten'],['deliveroo','out','Uit eten'],['mcdonald','out','Uit eten'],['starbucks','out','Uit eten'],['restaurant','out','Uit eten'],['domino','out','Uit eten'],
- ['bol.com','out','Winkelen'],['zalando','out','Winkelen'],['coolblue','out','Winkelen'],['amazon','out','Winkelen'],['temu','out','Winkelen'],['action','out','Winkelen'],['hema','out','Winkelen'],['wehkamp','out','Winkelen'],['kruidvat','out','Winkelen'],
+ ['bol.com','out','Winkelen'],['zalando','out','Winkelen'],['coolblue','out','Winkelen'],['amazon','out','Winkelen'],['temu','out','Winkelen'],['action','out','Winkelen'],['hema','out','Winkelen'],['wehkamp','out','Winkelen'],
  ['geldautomaat','out','Contant opgenomen']
 ].map(([match,dir,cat])=>({match,dir,cat}));
 
@@ -379,7 +398,10 @@ function normName(n){return String(n||'').toLowerCase().replace(/\d+/g,' ').repl
 /* Regels vergelijken zowel de letterlijke tekst als een opgeschoonde versie
    (zonder * _ cijfers enz.), zodat "CCV*Restaurant 123" ook "ccv restaurant" vindt. */
 const HAY=new WeakMap();
-function hayOf(t){let h=HAY.get(t);if(!h){h={raw:(' '+[t.name,t.desc,t.type,t.counter].join(' ')+' ').toLowerCase(),norm:' '+normName([t.name,t.desc,t.type].join(' '))+' '};HAY.set(t,h);}return h;}
+function hayOf(t){let h=HAY.get(t);if(!h){
+  // bij pinbetalingen staat in de mededeling alleen technische info (kaartnummer, "Transaction:", terminal); daar niet in zoeken
+  const desc=/payment terminal|betaalautomaat|cash machine|geldautomaat/i.test(t.type||'')?'':t.desc;
+  h={raw:(' '+[t.name,desc,t.type,t.counter].join(' ')+' ').toLowerCase(),norm:' '+normName([t.name,desc,t.type].join(' '))+' '};HAY.set(t,h);}return h;}
 function ruleMatches(r,t){
   if(r.dir==='in'&&t.amount<0) return false; if(r.dir==='out'&&t.amount>0) return false;
   const m=String(r.match||'').toLowerCase(); if(!m.trim()) return false;
@@ -421,7 +443,7 @@ function tagsFor(t){
 }
 const tagChip=(n,on,attrs='')=>`<button class="tagchip ${on?'on':''}" ${attrs} style="${on?`border-color:${tagColor(n)}`:''}"><span class="dot" style="background:${tagColor(n)}"></span>${esc(n)}</button>`;
 let TX=[];
-function rebuild(){buildCoverage();buildPeriods();TX=S.tx.map(t=>({...t,cat:categorize(t),tags:tagsFor(t),mk:periodKey(t.date)})).sort((a,b)=>b.date.localeCompare(a.date));
+function rebuild(){registerAccounts();buildCoverage();buildPeriods();TX=S.tx.map(t=>({...t,cat:categorize(t),tags:tagsFor(t),mk:periodKey(t.date)})).sort((a,b)=>b.date.localeCompare(a.date));
   if(S.cashAuto){const sd=salaryDays();for(const t of TX){ if(t.cat==='Contant opgenomen'&&!S.overrides[t.id]&&afterSalary(t.date,sd)) t.cat='Contant gespaard'; }}}
 /* ---------- Salaris, contante spaarpot, planning, saldo ---------- */
 function salaryKey(){ if(S.period&&S.period.payer) return S.period.payer;
@@ -506,8 +528,11 @@ function inScope(t,useFilter=true){
   return true;
 }
 const spendAccounts=()=>Object.entries(S.accounts).filter(([,a])=>!isSaveAcc(a));
+const looksSave=i=>/^[A-Z]\d{3}-?\d{5}$/.test(i);
 function registerAccounts(){
-  for(const t of S.tx){const i=normIban(t.account); if(i&&!S.accounts[i]) S.accounts[i]={label:'Rekening …'+i.slice(-4),type:'betaal',tags:[]};}
+  for(const t of S.tx){const i=normIban(t.account); if(!i) continue; const sv=t.accType==='spaar'||looksSave(i);
+    if(!S.accounts[i]) S.accounts[i]={label:(sv?'Spaarrekening …':'Rekening …')+i.slice(-4),type:sv?'spaar':'betaal',tags:[]};
+    else if(sv&&S.accounts[i].type==='betaal'&&/^Rekening …/.test(S.accounts[i].label||'')){S.accounts[i].type='spaar';S.accounts[i].label='Spaarrekening …'+i.slice(-4);}}
 }
 
 /* ---------- CSV inlezen (ING) ---------- */
@@ -545,7 +570,8 @@ function ingRowsToTx(rows){
   const col=(...names)=>head.findIndex(h=>names.some(n=>h===n||h.startsWith(n)));
   const iD=col('datum','date'),iN=col('naam','name'),iR=col('rekening','account'),iT=col('tegenrekening','counterparty'),
         iC=col('code'),iAB=col('af bij','debit/credit'),iB=col('bedrag','amount'),iM=col('mutatiesoort','transaction type'),
-        iMed=col('mededelingen','notifications','omschrijving'),iS=col('saldo','resulting balance');
+        iMed=col('mededelingen','notifications','omschrijving'),iS=col('saldo','resulting balance'),
+        iDesc=col('omschrijving','description'),iAN=col('rekening naam','account name');
   if(iD<0||iB<0) throw new Error('Dit lijkt geen ING-export: ik vind geen kolommen "Datum" en "Bedrag".');
   const out=[];
   for(const r of rows.slice(1)){
@@ -555,6 +581,8 @@ function ingRowsToTx(rows){
     if(ab==='af'||ab==='debit') amt=-Math.abs(amt); else if(ab==='bij'||ab==='credit') amt=Math.abs(amt);
     const t={date,name:(r[iN]||'').trim(),account:iR>=0?(r[iR]||'').trim():'',counter:iT>=0?(r[iT]||'').trim():'',code:iC>=0?r[iC]:'',
       amount:Math.round(amt*100)/100,type:iM>=0?(r[iM]||'').trim():'',desc:iMed>=0?(r[iMed]||'').trim():'',saldo:iS>=0?r[iS]:''};
+    if(!t.name&&iDesc>=0) t.name=(r[iDesc]||'').trim();
+    if(iAN>=0&&/spaar|saving|deposito/i.test(r[iAN]||'')) t.accType='spaar';
     t.id=hash([t.date,t.amount,t.name,t.desc,t.saldo,t.counter,t.account].join('|'));
     out.push(t);
   }
@@ -680,7 +708,7 @@ function recurring(){
     let freq=null, variable=false;
     const regular=gaps.filter(x=>Math.abs(x-30.4)<=8).length>=gaps.length*.8;
     if(g>=25&&g<=36&&sorted.length>=3&&regular&&spread<=.2) freq='maand';
-    else if(g>=25&&g<=36&&sorted.length>=4&&regular&&spread<=.8&&BILL_CATS.has(sorted[sorted.length-1].cat)&&sorted.filter(t=>/incasso/i.test(t.type)).length>=sorted.length*.6){ freq='maand'; variable=true; } // wisselend bedrag, vast ritme (telefoon, energie)
+    else if(g>=25&&g<=36&&sorted.length>=4&&regular&&spread<=.8&&BILL_CATS.has(sorted[sorted.length-1].cat)&&sorted.filter(t=>/incasso|direct debit/i.test(t.type)).length>=sorted.length*.6){ freq='maand'; variable=true; } // wisselend bedrag, vast ritme (telefoon, energie)
     else if(g>=80&&g<=100&&spread<=.25) freq='kwartaal';
     else if(g>=170&&g<=195&&spread<=.25) freq='halfjaar';
     else if(g>=350&&g<=380&&spread<=.25) freq='jaar';
@@ -736,7 +764,7 @@ function render(){
   const v=$('#view');
   if(!TX.length&&ui.tab!=='instellingen'&&ui.tab!=='meer'){v.innerHTML=emptyView();return;}
   const back=inMore?`<div style="margin-bottom:10px"><button class="btn-link" data-act="tab" data-tab="meer">← Meer</button> <span class="note">· ${MORE.find(m=>m[0]===ui.tab)[1]}</span></div>`:'';
-  v.innerHTML=back+{meer:viewMeer,nu:viewNu,overzicht:viewOverzicht,jaar:viewJaar,inzicht:viewInzicht,transacties:viewTx,vast:viewVast,doelen:viewDoelen,belasting:viewTax,instellingen:viewSettings}[ui.tab]();
+  v.innerHTML=back+{meer:viewMeer,nu:viewNu,overzicht:viewOverzicht,jaar:viewJaar,inzicht:viewInzicht,gewoon:viewGewoon,besparen:viewBesparen,transacties:viewTx,vast:viewVast,doelen:viewDoelen,belasting:viewTax,instellingen:viewSettings}[ui.tab]();
 }
 function renderSync(){
   $('#syncline').innerHTML=dbxConnected()?`<span class="status ${D.syncErr?'err':'ok'}"><i></i>${D.syncErr?'Dropbox: niet gesynchroniseerd':'Dropbox'+(D.lastSync?' · '+new Date(D.lastSync).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):'')}</span>`:'Alles blijft op je eigen apparaat.';
@@ -1161,11 +1189,205 @@ function billsCard(lastData,lastSal,nextSal,accRows,spendSet){
 }
 
 /* ---------- Jaaroverzicht ---------- */
-const GROUPS=[['Vaste lasten',['Wonen','Energie & water','Internet & telefoon','Verzekeringen','Abonnementen','Belastingen']],
-  ['Dagelijks',['Boodschappen','Vervoer','Kinderen','Huisdieren','Gezondheid']],
-  ['Vrije uitgaven',['Uit eten','Vakantie & uitjes','Winkelen','Schrijfkosten','Contant opgenomen']]];
+const GROUPS=[['Vaste lasten',['Wonen','Energie & water','Internet & telefoon','Verzekeringen','Abonnementen','Sport','Studieschuld & leningen','Belastingen']],
+  ['Dagelijks',['Boodschappen','Drogist','Vervoer','Kinderen','Huisdieren','Gezondheid']],
+  ['Vrije uitgaven',['Uit eten','Kleding','Winkelen','Huis & tuin','Hobby','Vakantie & uitjes','Schrijfkosten','Contant opgenomen']]];
 function groupOf(c){for(const [g,l] of GROUPS) if(l.includes(c)) return g; return 'Overig';}
 const nf0=new Intl.NumberFormat('nl-NL',{maximumFractionDigits:0});
+/* ---------- Een gewone maand & Besparen ---------- */
+const GCOL={'Vaste lasten':'#2F6E9E','Dagelijks':'#C9822B','Vrije uitgaven':'#C25C8E','Overig':'#9AA6A2','Buiten':'#8E7CA8'};
+const GNAME={'Overig':'Nog niet ingedeeld','Buiten':'Naar rekeningen buiten Kasboek'};
+const up10=v=>Math.ceil(v/10)*10;
+function fullMonths(){
+  if(!TX.length) return [];
+  const lastData=TX[0].date;
+  // pas tellen vanaf het moment dat alle (betaal)rekeningen erin staan
+  const starts=Object.entries(COV).filter(([i,c])=>!isSaveAcc(S.accounts[i])&&c.n>=20).map(([i,c])=>c.min).sort();
+  const from=starts.length?starts[starts.length-1]:TX[TX.length-1].date;
+  return months().filter(k=>PIDX[k]&&PIDX[k].end<lastData&&PIDX[k].start>=addDays(from,-3));
+}
+function gewoonData(){
+  const all=fullMonths(); const N=Math.min(ui.gn||12,all.length); const sel=all.slice(-N); const set=new Set(sel);
+  const inc={}, cat={}, perMonth={}; let saved=0, toSav=0, fromSav=0, nTo=0, nFrom=0;
+  sel.forEach(k=>perMonth[k]={inc:0,out:0,cat:{}});
+  for(const t of TX){ if(!set.has(t.mk)||!inScope(t)) continue; if(ui.gno&&S.oneoff[t.id]) continue;
+    if(IGNORE.has(t.cat)) continue;
+    if(SAVING.has(t.cat)){ saved+=-t.amount; if(t.amount<0){toSav-=t.amount;nTo++;} else {fromSav+=t.amount;nFrom++;} continue; }
+    const pm=perMonth[t.mk];
+    if(t.amount>0&&INCOME.has(t.cat)){ const k=t.cat==='Royalties'?"Royalty's":t.cat==='Overboeking eigen rekening'?'Van rekeningen buiten Kasboek':merchantName(t);
+      inc[k]=(inc[k]||0)+t.amount; pm.inc+=t.amount; continue; }
+    cat[t.cat]=(cat[t.cat]||0)-t.amount; pm.out+=-t.amount; pm.cat[t.cat]=(pm.cat[t.cat]||0)-t.amount; }
+  const avg=v=>v/(N||1);
+  const incL=Object.entries(inc).map(([k,v])=>({k,v:avg(v)})).sort((a,b)=>b.v-a.v);
+  const top=incL.slice(0,5), rest=incL.slice(5).reduce((a,x)=>a+x.v,0); if(rest>=1) top.push({k:'Overig binnen',v:rest});
+  const groups={};
+  for(const [c,v] of Object.entries(cat)){ const g=c==='Overboeking eigen rekening'?'Buiten':groupOf(c);
+    (groups[g]=groups[g]||{g,v:0,cats:[]}); groups[g].v+=avg(v); groups[g].cats.push({c,v:avg(v)}); }
+  const order=['Vaste lasten','Dagelijks','Vrije uitgaven','Overig','Buiten'];
+  const G=order.filter(g=>groups[g]&&Math.abs(groups[g].v)>=1).map(g=>{groups[g].cats.sort((a,b)=>b.v-a.v);return groups[g];});
+  const incTot=incL.reduce((a,x)=>a+x.v,0), outTot=G.reduce((a,x)=>a+x.v,0);
+  return {all,sel,N,incL:top,incTot,G,outTot,over:incTot-outTot,saved:avg(saved),toSav:avg(toSav),fromSav:avg(fromSav),nTo,nFrom,perMonth,cat:Object.fromEntries(Object.entries(cat).map(([c,v])=>[c,avg(v)]))};
+}
+function periodChips(d){
+  const opts=[3,6,12].filter(n=>n<d.all.length); if(d.all.length) opts.push(Math.min(24,d.all.length));
+  const uniq=[...new Set(opts)];
+  return `<div class="chips" role="group" aria-label="Periode">${uniq.map(n=>`<button data-act="gn" data-v="${n}" aria-pressed="${d.N===n}">${n===d.all.length&&n>12?'Alles ('+n+' mnd)':n+' maanden'}</button>`).join('')}
+    ${Object.keys(S.oneoff||{}).length?`<button data-act="gno" aria-pressed="${!!ui.gno}">Zonder eenmalige uitgaven</button>`:''}</div>`;
+}
+function viewGewoon(){
+  const d=gewoonData();
+  if(!d.N) return `<div class="card stack"><h2>Een gewone maand</h2><p>Hiervoor is minstens één hele maand aan afschriften nodig. Laad een afschrift in dat een hele maand beslaat.</p></div>`;
+  const p0=PIDX[d.sel[0]], p1=PIDX[d.sel[d.sel.length-1]];
+  const max=Math.max(1,d.incTot,...d.G.map(g=>g.v));
+  const from=p0.start;
+  const fmtSign=v=>`${v>=0?'+':'−'} ${eur0.format(Math.abs(v))}`;
+  const over=d.over;
+  let say;
+  if(over>=25) say=`In een gewone maand houden jullie ongeveer <b class="num">${eur0.format(over)}</b> over.`;
+  else if(over>-25) say=`In een gewone maand gaat er ongeveer evenveel uit als er binnenkomt.`;
+  else say=`In een gewone maand gaat er ongeveer <b class="num">${eur0.format(-over)}</b> meer uit dan er binnenkomt.`;
+  let savSay='';
+  if(d.nTo+d.nFrom>0){
+    savSay=`Er ging in deze maanden ${d.nTo} keer geld naar de spaarrekening of spaarpot, en ${d.nFrom} keer kwam er geld terug. `;
+    savSay+=d.saved>=10?`Per saldo groeit het spaargeld met ongeveer <b class="num">${eur0.format(d.saved)}</b> per maand.`
+      :d.saved<=-10?`Per saldo komt er ongeveer <b class="num">${eur0.format(-d.saved)}</b> per maand <i>uit</i> het spaargeld. Daardoor kun je vaak wel iets van de spaarrekening halen, maar dat is geld dat je eerder opzij had gezet, niet wat je overhoudt.`
+      :`Per saldo blijft het spaargeld ongeveer gelijk: wat erheen gaat, komt later in de maand weer terug.`;
+  }
+  // eigen rekeningen buiten Kasboek herkennen (bijv. Jordy)
+  const cand={};
+  for(const t of TX){ if(!d.sel.includes(t.mk)||t.cat!=='Overig'||t.amount>=0||!inScope(t)) continue; const ib=normIban(t.counter);
+    if(!/^[A-Z]{2}\d{2}[A-Z]{4}/.test(ib)||S.accounts[ib]||(S.dismissed||{})['gown:'+ib]) continue;
+    (cand[ib]=cand[ib]||{ib,name:t.name,sum:0,n:0,ms:new Set()}); cand[ib].sum-=t.amount; cand[ib].n++; cand[ib].ms.add(t.mk); }
+  const own=Object.values(cand).filter(c=>c.sum/d.N>=75&&c.ms.size>=Math.max(2,d.N/2)).sort((a,b)=>b.sum-a.sum).slice(0,3);
+  const monthRows=d.sel.map(k=>{const m=d.perMonth[k];return {k,v:m.inc-m.out};});
+  const mmax=Math.max(1,...monthRows.map(r=>Math.abs(r.v)));
+  return `<div class="stack">
+   <div class="card stack" style="border-color:var(--accent)">
+     <div><h2>Een gewone maand</h2><p class="sub">Het gemiddelde van ${d.N===1?'één maand':d.N+' maanden'}: ${p0.name} t/m ${p1.name}.</p></div>
+     ${periodChips(d)}
+     <div class="potbox">
+       <div><h3>Komt binnen</h3><div class="num in">${eur0.format(d.incTot)}</div></div>
+       <div><h3>Gaat uit</h3><div class="num out">${eur0.format(d.outTot)}</div></div>
+       <div><h3>Blijft over</h3><div class="num ${over<0?'out':'in'}">${fmtSign(over)}</div></div></div>
+     <p>${say}</p>
+     ${savSay?`<p class="note">${savSay}</p>`:''}
+   </div>
+
+   ${own.length?`<div class="card stack"><h3>Is dit een rekening van jullie?</h3>
+     <p class="note">Hier gaat elke maand geld heen. Is het een eigen rekening (bijvoorbeeld van Jordy), dan zet Kasboek het apart als <i>naar rekeningen buiten Kasboek</i>, in plaats van tussen de uitgaven.</p>
+     ${own.map(c=>`<div class="rec"><div style="min-width:0"><b>${esc(c.name)}</b><div class="meta">${esc(c.ib)} · gemiddeld ${eur0.format(c.sum/d.N)} per maand</div></div>
+       <div class="amt row" style="justify-content:flex-end"><button class="btn-small" data-act="gown" data-iban="${esc(c.ib)}" data-name="${esc(c.name)}">Ja, eigen rekening</button><button class="btn-small" data-act="gownno" data-iban="${esc(c.ib)}">Nee</button></div></div>`).join('')}
+   </div>`:''}
+
+   <div class="card stack"><h2>Wat er binnenkomt</h2>
+     <div class="bon">${d.incL.map(x=>`<div class="bonrow"><span>${esc(x.k)}</span><span class="num">${eur0.format(x.v)}</span>
+        <span class="bonbar"><span style="width:${(x.v/max*100).toFixed(1)}%;background:var(--in)"></span></span></div>`).join('')}
+       <div class="bonrow tot end"><span>Samen</span><span class="num in">${eur0.format(d.incTot)}</span></div></div>
+     <p class="note">Per maand, gemiddeld. Geld van je eigen spaarrekening telt hier niet mee: dat is geen inkomen.</p>
+   </div>
+
+   <div class="card stack"><h2>Wat er uitgaat</h2>
+     <div class="bon">${d.G.map(g=>`<details class="bongrp"><summary class="bonrow"><span class="nm"><span class="dot" style="background:${GCOL[g.g]}"></span><span>${GNAME[g.g]||g.g}</span><span class="chev" aria-hidden="true">›</span></span>
+         <span class="num">${eur0.format(g.v)}</span>
+         <span class="bonbar"><span style="width:${(Math.max(0,g.v)/max*100).toFixed(1)}%;background:${GCOL[g.g]}"></span></span></summary>
+       <div class="bonitems">${g.cats.filter(x=>Math.abs(x.v)>=1).map(x=>`<button class="bonrow sub" data-act="nucat" data-cat="${esc(x.c)}" data-from="${from}"><span>${esc(x.c==='Overig'?'Nog niet ingedeeld':x.c==='Overboeking eigen rekening'?'Naar andere eigen rekeningen':x.c)}</span><span class="num">${eur0.format(x.v)}</span></button>`).join('')}
+       ${g.g==='Overig'?`<div class="bonhint"><span class="note">Hoe kleiner dit is, hoe beter de rest klopt.</span><button class="btn-small" data-act="todo-overig">Indelen</button></div>`:''}</div></details>`).join('')}
+       <div class="bonrow tot end"><span>Samen</span><span class="num out">${eur0.format(d.outTot)}</span></div></div>
+     <p class="note">Tik op een groep voor de categorieën, en op een categorie voor de transacties.</p>
+   </div>
+
+   <div class="card stack"><h2>Wat er overblijft</h2>
+     <div class="bon">
+       <div class="bonrow"><span>Komt binnen</span><span class="num">${eur0.format(d.incTot)}</span></div>
+       <div class="bonrow"><span>Gaat uit</span><span class="num">− ${eur0.format(d.outTot)}</span></div>
+       <div class="bonrow tot"><span>Blijft over</span><span class="num ${over<0?'out':'in'}">${fmtSign(over)}</span></div>
+       ${Math.abs(d.saved)>=1?`<div class="bonrow"><span>${d.saved>=0?'Daarvan naar je spaargeld':'Erbij uit je spaargeld'}</span><span class="num">${eur0.format(Math.abs(d.saved))}</span></div>
+       <div class="bonrow tot end"><span>Op de betaalrekening${Object.keys(COV).filter(i=>!isSaveAcc(S.accounts[i])).length>1?'en':''}</span><span class="num">${fmtSign(over-d.saved)}</span></div>`:''}
+     </div>
+   </div>
+
+   <div class="card stack"><h2>Per maand</h2>
+     <div class="bon">${monthRows.map(r=>`<div class="bonrow"><span>${PIDX[r.k].name}</span><span class="num ${r.v<0?'out':'in'}">${fmtSign(r.v)}</span>
+       <span class="bonbar" style="display:flex;justify-content:${r.v<0?'flex-end':'flex-start'};background:none"><span style="width:${(Math.abs(r.v)/mmax*50).toFixed(1)}%;background:${r.v<0?'var(--out)':'var(--in)'};${r.v<0?'margin-right:50%':'margin-left:50%'}"></span></span></div>`).join('')}</div>
+     <p class="note">Wat er per maand overbleef (binnen min uit, zonder spaargeld). Maanden met een grote losse uitgave springen eruit. Zie je er een die je niet wilt meetellen? Markeer die uitgave bij Transacties als eenmalig.</p>
+   </div>
+  </div>`;
+}
+
+function viewBesparen(){
+  const d=gewoonData();
+  if(!d.N) return `<div class="card stack"><h2>Besparen</h2><p>Hiervoor is minstens één hele maand aan afschriften nodig.</p></div>`;
+  const set=new Set(d.sel);
+  const W=TX.filter(t=>set.has(t.mk)&&inScope(t)&&t.amount<0&&!SAVING.has(t.cat)&&!IGNORE.has(t.cat)&&t.cat!=='Overboeking eigen rekening');
+  const per=v=>v/d.N;
+  const parts=[];
+  // 1. potjes voor grote uitgaven
+  const POTCATS=['Kleding','Huis & tuin','Vakantie & uitjes','Kinderen','Winkelen','Belastingen','Verzekeringen','Gezondheid','Huisdieren','Hobby'];
+  const pots=[];
+  for(const c of POTCATS){ const vals=d.sel.map(k=>d.perMonth[k].cat[c]||0); const tot=vals.reduce((a,x)=>a+x,0); if(tot<150) continue;
+    const med=pct(vals,.5), mx=Math.max(...vals); if(d.N>=3&&mx<Math.max(60,med*2.2)) continue;
+    const peaks=d.sel.filter((k,i)=>vals[i]>=Math.max(med*1.8,mx*.6)).map(k=>MONTHS[+PIDX[k].mid.slice(5,7)-1]);
+    pots.push({c,per:per(tot),year:per(tot)*12,peaks:[...new Set(peaks)]}); }
+  for(const r of recurring()){ if(!['jaar','halfjaar','kwartaal'].includes(r.freq)) continue; if(r.amount<40) continue;
+    pots.push({c:r.name,per:r.monthly,year:r.monthly*12,bill:r.freq,next:r.next}); }
+  pots.sort((a,b)=>b.year-a.year);
+  const hasGoal=n=>(S.goals||[]).some(g=>g.name==='Potje: '+n);
+  if(pots.length) parts.push(`<div class="card stack"><h2>Potjes voor grote uitgaven</h2>
+    <p class="note">Deze uitgaven komen niet elke maand, maar wel elk jaar terug. Als ze komen, maken ze een maand ineens krap. Zet je er elke maand een klein bedrag voor opzij, dan is het geld er als het nodig is.</p>
+    <div>${pots.slice(0,8).map(p=>`<div class="rec"><div style="min-width:0"><b>${esc(p.c)}</b>
+      <div class="meta">${p.bill?`${p.bill}betaling, volgende rond ${fmtD(p.next)}`:`ongeveer ${eur0.format(p.year)} per jaar${p.peaks.length?`, vooral in ${p.peaks.slice(0,3).join(', ')}`:''}`}</div></div>
+      <div class="amt"><div class="num">${eur0.format(up10(p.per))} <span class="note">/mnd</span></div>
+      ${hasGoal(p.c)?'<span class="note">✓ potje staat klaar</span>':`<button class="btn-small" style="margin-top:4px" data-act="mkpot" data-name="${esc(p.c)}" data-year="${Math.round(p.year)}">Maak potje</button>`}</div></div>`).join('')}</div>
+    <p class="note">Samen ${eur0.format(pots.slice(0,8).reduce((a,p)=>a+up10(p.per),0))} per maand. Een potje komt bij <i>Sparen & plannen</i> te staan. Een aparte spaarrekening voor de potjes, los van je buffer, helpt om te zien waar het geld voor bedoeld is.</p></div>`);
+  // 2. kleine dingen die optellen
+  const m={};
+  for(const t of W){ if(-t.amount>25) continue; if(['Boodschappen','Wonen','Energie & water','Internet & telefoon','Verzekeringen','Belastingen'].includes(t.cat)) continue;
+    const k=merchantName(t); (m[k]=m[k]||{k,sum:0,n:0,cat:t.cat}); m[k].sum-=t.amount; m[k].n++; }
+  const small=Object.values(m).filter(x=>x.n/d.N>=2&&per(x.sum)>=25).sort((a,b)=>b.sum-a.sum).slice(0,6);
+  if(small.length){ const tot=small.reduce((a,x)=>a+per(x.sum),0);
+    parts.push(`<div class="card stack"><h2>Kleine dingen die optellen</h2>
+    <p class="note">Losse aankopen tot € 25 die vaak terugkomen. Apart voelen ze als niks, maar per jaar tellen ze op.</p>
+    <div>${small.map(x=>`<div class="rec"><div style="min-width:0"><b>${esc(x.k)}</b><span class="pill">${esc(x.cat==='Overig'?'nog niet ingedeeld':x.cat)}</span><div class="meta">${(x.n/d.N).toFixed(0)}× per maand · gemiddeld ${eur.format(x.sum/x.n)}</div></div>
+      <div class="amt"><div class="num">${eur0.format(per(x.sum))} <span class="note">/mnd</span></div><div class="note">${eur0.format(per(x.sum)*12)} per jaar</div></div></div>`).join('')}</div>
+    <p class="note">Samen ${eur0.format(tot)} per maand, ${eur0.format(tot*12)} per jaar. De helft hiervan is ${eur0.format(tot/2)} per maand.</p></div>`); }
+  // 3. abonnementen en vaste betalingen
+  const rec=recurring().filter(r=>r.freq==='maand'&&['Abonnementen','Sport','Internet & telefoon','Verzekeringen','Energie & water'].includes(r.cat)).sort((a,b)=>b.monthly-a.monthly);
+  if(rec.length){ const tot=rec.reduce((a,r)=>a+r.monthly,0);
+    parts.push(`<div class="card stack"><div class="spread"><h2>Abonnementen en contracten</h2><span class="num">${eur0.format(tot)} <span class="note">/mnd</span></span></div>
+    <div>${rec.slice(0,12).map(r=>`<div class="rec"><div style="min-width:0"><b>${esc(r.name)}</b><span class="pill">${esc(r.cat)}</span>${r.rise?'<span class="pill" style="color:var(--out)">duurder geworden</span>':''}</div><div class="amt num">${eur.format(r.amount)}</div></div>`).join('')}</div>
+    <p class="note">${eur0.format(tot*12)} per jaar. Bij abonnementen helpt de vraag: heb ik dit de afgelopen maand gebruikt? Bij energie, internet en verzekeringen scheelt vergelijken en overstappen vaak het meest. Je zorgverzekering kun je elk jaar tot 31 december opzeggen.</p>
+    <button class="btn-small" data-act="tab" data-tab="vast">Alle vaste lasten bekijken</button></div>`); }
+  // 4. budget-ideeën
+  const BCATS=[...GROUPS[1][1],...GROUPS[2][1]].filter(c=>c!=='Contant opgenomen');
+  const bud=[];
+  for(const c of BCATS){ const vals=d.sel.map(k=>d.perMonth[k].cat[c]||0); const avg=vals.reduce((a,x)=>a+x,0)/d.N; if(avg<30) continue;
+    const calm=pct(vals,d.N>=4?.3:.5); const sug=Math.max(10,up10((calm+pct(vals,.5))/2)); bud.push({c,avg,calm,sug,cur:S.budgets[c]||0}); }
+  bud.sort((a,b)=>b.avg-a.avg);
+  if(bud.length){ const gain=bud.reduce((a,b)=>a+Math.max(0,b.avg-b.sug),0);
+    parts.push(`<div class="card stack"><h2>Budget-ideeën</h2>
+    <p class="note">Een voorstel per categorie, gebaseerd op jullie eigen rustige maanden. Het is dus een bedrag dat al eens gelukt is, geen streng doel. Kasboek waarschuwt in het Maand-overzicht als je erboven komt.</p>
+    <div>${bud.map(b=>`<div class="rec"><div style="min-width:0"><b>${esc(b.c)}</b><div class="meta">nu gemiddeld ${eur0.format(b.avg)} · rustige maand ${eur0.format(b.calm)}${b.cur&&b.cur!==b.sug?` · je budget nu ${eur0.format(b.cur)}`:''}</div></div>
+      <div class="amt"><div class="num">${eur0.format(b.sug)} <span class="note">/mnd</span></div>${b.cur===b.sug?'<span class="note">✓ ingesteld</span>':`<button class="btn-small" style="margin-top:4px" data-act="setbud" data-cat="${esc(b.c)}" data-v="${b.sug}">${b.cur?'Aanpassen':'Gebruik'}</button>`}</div></div>`).join('')}</div>
+    <p class="note">Lukt het om rond deze bedragen te blijven, dan scheelt dat ongeveer ${eur0.format(gain)} per maand.</p>
+    ${bud.some(b=>b.cur!==b.sug)?'<button class="btn-small" data-act="setbudall">Alle voorstellen gebruiken</button>':''}</div>`); }
+  // 5. tips uit je eigen cijfers
+  const tips=[];
+  const kl=d.cat['Kleding']||0;
+  if(kl>=10) tips.push(`<b>Kleding in de uitverkoop.</b> Jullie geven gemiddeld ${eur0.format(kl)} per maand uit aan kleding. De grote uitverkoop is in januari en juli. Zet elke maand ${eur0.format(up10(kl))} opzij in een kledingpotje, dan heb je het geld klaar als de prijzen omlaag gaan. Kinderkleding koop je dan meteen een maat groter.`);
+  const dec=d.sel.filter(k=>+PIDX[k].mid.slice(5,7)===12); if(dec.length){ const dv=dec.reduce((a,k)=>a+d.perMonth[k].out,0)/dec.length; const ov=d.outTot; if(dv>ov*1.08) tips.push(`<b>December is duurder.</b> In december ging er ongeveer ${eur0.format(dv-ov)} meer uit dan in een gewone maand (Sinterklaas, kerst, cadeaus). Met ${eur0.format(up10((dv-ov)/12))} per maand in een decemberpotje is dat er gewoon.`); }
+  if(d.nFrom>=d.N*2) tips.push(`<b>Spaargeld dat heen en weer gaat.</b> Er kwam ${d.nFrom} keer geld terug van de spaarrekening. Een idee: zet vlak na het salaris alleen geld opzij voor de potjes en een vaste buffer, en laat de rest op de betaalrekening staan. Dan hoef je het niet terug te halen, en zie je eerlijker wat er over is.`);
+  const ue=(d.cat['Uit eten']||0); if(ue>=75) tips.push(`<b>Koffie, lunch en uit eten.</b> Samen ${eur0.format(ue)} per maand, ${eur0.format(ue*12)} per jaar. Thuis koffie zetten of een lunch meenemen op een paar dagen per week scheelt snel.`);
+  const bo=(d.cat['Boodschappen']||0); if(bo>=300) tips.push(`<b>Boodschappen.</b> ${eur0.format(bo)} per maand. Wat vaak scheelt: één keer per week een weekmenu en een boodschappenlijst, huismerk waar het kan, en de aanbiedingenfolder vóór je gaat.`);
+  const ov=(d.cat['Overig']||0); if(ov>=100) tips.push(`<b>Eerst indelen.</b> Er staat gemiddeld ${eur0.format(ov)} per maand in <i>nog niet ingedeeld</i>. Hoe kleiner dat is, hoe beter je ziet waar je op kunt besparen. <button class="btn-link" data-act="todo-overig">Nu indelen</button>`);
+  if(tips.length) parts.push(`<div class="card stack"><h2>Tips uit jullie eigen cijfers</h2><div class="stack-s">${tips.map(t=>`<p>${t}</p>`).join('')}</div></div>`);
+  return `<div class="stack">
+    <div class="card stack" style="border-color:var(--accent)"><div><h2>Besparen</h2><p class="sub">Op basis van ${d.N===1?'één maand':d.N+' maanden'}: ${PIDX[d.sel[0]].name} t/m ${PIDX[d.sel[d.sel.length-1]].name}.</p></div>
+      ${periodChips(d)}
+      <p class="note">Ideeën, geen regels. Kies wat bij jullie past.</p></div>
+    ${parts.join('')||'<div class="card"><p>Nog niet genoeg gegevens voor ideeën.</p></div>'}
+  </div>`;
+}
+
 const pYear=k=>PIDX[k]?PIDX[k].year:+k.slice(0,4);
 function yearCols(){
   const ks=months(); const years=[...new Set(ks.map(pYear))].sort();
@@ -1969,6 +2191,14 @@ document.addEventListener('click',async e=>{
   if(a==='recurauto'){const r={...(S.recur||{})};delete r[b.dataset.key];S.recur=r;save();render();}
   if(a==='recuradd'){S.recur={...(S.recur||{}),[b.dataset.key]:b.dataset.f};ui.recq='';save();render();toast('Toegevoegd als vaste last.');}
   if(a==='win'){ui.win=b.dataset.v;render();}
+  if(a==='gn'){ui.gn=+b.dataset.v;render();}
+  if(a==='gno'){ui.gno=!ui.gno;render();}
+  if(a==='gown'){const ib=b.dataset.iban;S.accounts[ib]={label:b.dataset.name||'Rekening …'+ib.slice(-4),type:'betaal',tags:[]};save();render();toast('Staat nu apart als eigen rekening. Je kunt de naam aanpassen bij Instellingen.');}
+  if(a==='gownno'){S.dismissed=S.dismissed||{};S.dismissed['gown:'+b.dataset.iban]=1;save();render();}
+  if(a==='mkpot'){const n=b.dataset.name;const dt=new Date();dt.setMonth(dt.getMonth()+12);
+    S.goals.push({id:'g'+Date.now().toString(36),name:'Potje: '+n,target:+b.dataset.year,saved:0,by:dt.toISOString().slice(0,7)});save();render();toast('Potje gemaakt. Je vindt het bij Sparen & plannen.');}
+  if(a==='setbud'){S.budgets[b.dataset.cat]=+b.dataset.v;save();render();toast('Budget ingesteld.');}
+  if(a==='setbudall'){document.querySelectorAll('[data-act="setbud"]').forEach(x=>S.budgets[x.dataset.cat]=+x.dataset.v);save();render();toast('Budgetten ingesteld.');}
   if(a==='nucat'){ui.tab='transacties';ui.q='';ui.limit=150;ui.facc=ui.acc;ui.ftag='';ui.fmonth='';ui.fcat=b.dataset.cat;ui.fromDate=b.dataset.from;render();window.scrollTo(0,0);}
   if(a==='ycat'||a==='ytag'){ui.tab='transacties';ui.q='';ui.limit=150;ui.facc=ui.acc;
     if(a==='ycat'){ui.fcat=b.dataset.key;ui.ftag=ui.tag;}else{ui.ftag=b.dataset.key;ui.fcat='';}
