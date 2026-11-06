@@ -246,7 +246,7 @@ ol.steps{margin:6px 0 0;padding-left:1.2em;color:var(--muted);font-size:.9rem;di
 <div id="toast" class="toast" hidden></div>
 
 <script>
-const VERSION='2026-11-06c';
+const VERSION='2026-11-06d';
 const clone=o=>JSON.parse(JSON.stringify(o));
 /* ---------- Basis ---------- */
 const STORE='kasboek.v1', LOCAL='kasboek.device';
@@ -277,6 +277,8 @@ const isSaveAcc=a=>a&&(a.type==='spaar'||a.type==='pot');
 const DEFAULT_RULES=[
  ['spaarrekening','any','Sparen'],['oranje spaar','any','Sparen'],
  // specifieke regels eerst
+ ['amazon.com services','in','Royalties'],['amazon.com services, llc','in','Royalties'],['amazon australia','in','Royalties'],['amazon asia','in','Royalties'],['amazon media','in','Royalties'],['amazon digital','in','Royalties'],['amazon services','in','Royalties'],['amazon mexico','in','Royalties'],['amazon japan','in','Royalties'],['amazon.co','in','Royalties'],['amazon kdp','in','Royalties'],
+ ['tantor','in','Royalties'],['audible','in','Royalties'],['acx','in','Royalties'],['findaway','in','Royalties'],['storytel','in','Royalties'],['bookwire','in','Royalties'],['streetlib','in','Royalties'],['smashwords','in','Royalties'],['lulu','in','Royalties'],['ingramspark','in','Royalties'],
  ['geldmaat','out','Contant opgenomen'],['cash machine','out','Contant opgenomen'],
  ['ing deposit','in','Contant gespaard'],['storting','in','Contant gespaard'],
  ['argenta','out','Wonen'],['hyp ','out','Wonen'],['hypothe','out','Wonen'],
@@ -319,7 +321,7 @@ const DEFAULT_RULES=[
  ['geldautomaat','out','Contant opgenomen']
 ].map(([match,dir,cat])=>({match,dir,cat}));
 
-const PLATFORMS=[['amazon','Amazon KDP'],['kindle','Amazon KDP'],['kdp','Amazon KDP'],['draft2digital','Draft2Digital'],['books2read','Draft2Digital'],['kobo','Kobo'],['ingram','IngramSpark'],['google','Google Play Books'],['apple','Apple Books'],['bookfunnel','BookFunnel'],['payhip','Payhip'],['patreon','Patreon'],['ko-fi','Ko-fi']];
+const PLATFORMS=[['tantor','Tantor Media'],['audible','Audible / ACX'],['acx','Audible / ACX'],['storytel','Storytel'],['findaway','Findaway Voices'],['amazon','Amazon KDP'],['kindle','Amazon KDP'],['kdp','Amazon KDP'],['draft2digital','Draft2Digital'],['books2read','Draft2Digital'],['kobo','Kobo'],['ingram','IngramSpark'],['google','Google Play Books'],['apple','Apple Books'],['bookfunnel','BookFunnel'],['payhip','Payhip'],['patreon','Patreon'],['ko-fi','Ko-fi']];
 const PLAT_COLORS=['#7A5CC2','#3C9FA8','#C9822B','#4FA37A','#C25C8E','#2F6E9E','#8C6A4A','#9AA6A2'];
 
 /* Belasting 2026 (box 1, onder AOW-leeftijd) */
