@@ -246,7 +246,7 @@ ol.steps{margin:6px 0 0;padding-left:1.2em;color:var(--muted);font-size:.9rem;di
 <div id="toast" class="toast" hidden></div>
 
 <script>
-const VERSION='2026-11-06d';
+const VERSION='2026-11-06f';
 const clone=o=>JSON.parse(JSON.stringify(o));
 /* ---------- Basis ---------- */
 const STORE='kasboek.v1', LOCAL='kasboek.device';
@@ -264,7 +264,7 @@ const CATS=[
  ['Inkomsten','#3E8E5E'],['Royalties','#7A5CC2'],['Boodschappen','#C9822B'],['Wonen','#2F6E9E'],
  ['Energie & water','#D0A21F'],['Internet & telefoon','#3C9FA8'],['Verzekeringen','#5A7A8C'],['Abonnementen','#C25C8E'],
  ['Vervoer','#8C6A4A'],['Kinderen','#E07A5F'],['Vakantie & uitjes','#3E9CC4'],['Huisdieren','#B07D3A'],['Gezondheid','#4FA37A'],['Uit eten','#D46A3A'],
- ['Winkelen','#9C7BB0'],['Kleding','#B56A9A'],['Huis & tuin','#7C9A4A'],['Hobby','#5C8FC2'],['Drogist','#D9A05B'],['Sport','#3FA39A'],['Studieschuld & leningen','#8B5A5A'],['Belastingen','#A04848'],['Schrijfkosten','#6A8D3A'],['Contant opgenomen','#7F8C88'],
+ ['Winkelen','#9C7BB0'],['PayPal','#2F7FB8'],['Kleding','#B56A9A'],['Huis & tuin','#7C9A4A'],['Hobby','#5C8FC2'],['Drogist','#D9A05B'],['Sport','#3FA39A'],['Studieschuld & leningen','#8B5A5A'],['Belastingen','#A04848'],['Schrijfkosten','#6A8D3A'],['Contant opgenomen','#7F8C88'],
  ['Sparen','#1F6F66'],['Contant gespaard','#2E8B6E'],['Belastingreservering','#4C6FB0'],['Eigen rekening','#B3BDB9'],['Overboeking eigen rekening','#8E7CA8'],['Overig','#9AA6A2']
 ];
 const SAVING=new Set(['Sparen','Contant gespaard','Belastingreservering']);   // apart zetten, geen uitgave
@@ -277,10 +277,11 @@ const isSaveAcc=a=>a&&(a.type==='spaar'||a.type==='pot');
 const DEFAULT_RULES=[
  ['spaarrekening','any','Sparen'],['oranje spaar','any','Sparen'],
  // specifieke regels eerst
+ ['paypal','out','PayPal'],['paypal','in','PayPal'],
  ['amazon.com services','in','Royalties'],['amazon.com services, llc','in','Royalties'],['amazon australia','in','Royalties'],['amazon asia','in','Royalties'],['amazon media','in','Royalties'],['amazon digital','in','Royalties'],['amazon services','in','Royalties'],['amazon mexico','in','Royalties'],['amazon japan','in','Royalties'],['amazon.co','in','Royalties'],['amazon kdp','in','Royalties'],
  ['tantor','in','Royalties'],['audible','in','Royalties'],['acx','in','Royalties'],['findaway','in','Royalties'],['storytel','in','Royalties'],['bookwire','in','Royalties'],['streetlib','in','Royalties'],['smashwords','in','Royalties'],['lulu','in','Royalties'],['ingramspark','in','Royalties'],
  ['geldmaat','out','Contant opgenomen'],['cash machine','out','Contant opgenomen'],
- ['ing deposit','in','Contant gespaard'],['storting','in','Contant gespaard'],
+ ['ing deposit','in','Contant opgenomen'],['storting','in','Contant opgenomen'],
  ['argenta','out','Wonen'],['hyp ','out','Wonen'],['hypothe','out','Wonen'],
  ['ziektekosten','out','Verzekeringen'],['zorgverzeker','out','Verzekeringen'],['asr ','out','Verzekeringen'],['veldsink','out','Verzekeringen'],['nationale-nederlanden','out','Verzekeringen'],['unive','out','Verzekeringen'],
  ['duo ','out','Studieschuld & leningen'],['duo hoofdrekening','out','Studieschuld & leningen'],
@@ -293,7 +294,7 @@ const DEFAULT_RULES=[
  ['horse nation','out','Hobby'],['hobbii','out','Hobby'],['valve','out','Hobby'],['steam','out','Hobby'],['nintendo','out','Hobby'],['playstation','out','Hobby'],['steekje','out','Hobby'],['gamekeeper','out','Hobby'],['3d b.v','out','Hobby'],
  ['espresso','out','Uit eten'],['cafetria','out','Uit eten'],['cafetaria','out','Uit eten'],['eetcafe','out','Uit eten'],['snack','out','Uit eten'],['febo','out','Uit eten'],['sodexo','out','Uit eten'],['bagels','out','Uit eten'],['lunchroom','out','Uit eten'],['koffie','out','Uit eten'],['pizza','out','Uit eten'],['blend one','out','Uit eten'],
  ['klink','out','Boodschappen'],['spar ','out','Boodschappen'],['supermarkt','out','Boodschappen'],['slager','out','Boodschappen'],['bakker','out','Boodschappen'],['marqt','out','Boodschappen'],
- ['allsafe','out','Wonen'],['opslag','out','Wonen'],['veenema energy','out','Energie & water'],['kwantum','out','Huis & tuin'],['eethuis','out','Uit eten'],['horeca','out','Uit eten'],['parkcafe','out','Uit eten'],['gezondheidswinkel','out','Gezondheid'],['massage','out','Gezondheid'],['kosten ing','out','Abonnementen'],['avia','out','Vervoer'],['curls','out','Drogist'],
+ ['allsafe','out','Wonen'],['opslag','out','Wonen'],['veenema energy','out','Energie & water'],['kwantum','out','Huis & tuin'],['eethuis','out','Uit eten'],['horeca','out','Uit eten'],['parkcafe','out','Uit eten'],['gezondheidswinkel','out','Gezondheid'],['massage','out','Gezondheid'],['kosten ing','out','Abonnementen'],['oranjepakket','out','Abonnementen'],['avia','out','Vervoer'],['curls','out','Drogist'],
  ['hoftheater','out','Vakantie & uitjes'],['ticketcounter','out','Vakantie & uitjes'],['museumkaart','out','Vakantie & uitjes'],['monkeytown','out','Vakantie & uitjes'],['pathe','out','Vakantie & uitjes'],['kinepolis','out','Vakantie & uitjes'],['dierentuin','out','Vakantie & uitjes'],['24 play','out','Vakantie & uitjes'],['paviljoen','out','Vakantie & uitjes'],
  ['amazon media eu','in','Royalties'],['kindle direct','in','Royalties'],['kdp','in','Royalties'],['draft2digital','in','Royalties'],
  ['kobo','in','Royalties'],['ingram','in','Royalties'],['google payment','in','Royalties'],['books2read','in','Royalties'],['bookfunnel','in','Royalties'],
@@ -328,7 +329,7 @@ const PLAT_COLORS=['#7A5CC2','#3C9FA8','#C9822B','#4FA37A','#C25C8E','#2F6E9E','
 const TAX={year:2026,brackets:[[38883,.3575],[78426,.3756],[Infinity,.495]],za:1200,mkb:.127,deductCap:.3756,zvw:.0485,zvwMax:79409};
 
 const DEFAULT_STATE={tx:[],userRules:[],disabledBuiltins:[],extraCats:[],overrides:{},tax:{},sample:true,
-  budgets:{},goals:[],accounts:{},taxReserved:{},period:{mode:'cal',day:1,payer:''},tags:['Idonea','Jordy','Gezin','Kind','Dieren'],txTags:{},oneoff:{},dismissed:{},recur:{},cash:[],cashAuto:false,planned:[],manualBal:{},savedAt:0,wipedAt:0};
+  budgets:{},goals:[],accounts:{},taxReserved:{},period:{mode:'cal',day:1,payer:''},tags:['Idonea','Jordy','Gezin','Kind','Dieren'],txTags:{},oneoff:{},dismissed:{},recur:{},ppNames:{},cash:[],cashAuto:false,planned:[],manualBal:{},savedAt:0,wipedAt:0};
 let S=clone(DEFAULT_STATE);
 let D={tab:'',dbxKey:'',dbxRefresh:'',dbxAccess:'',dbxExp:0,pw:'',lastSync:0,syncErr:''}; // alleen dit apparaat
 let ui={tab:'nu',win:'14',month:null,q:'',fcat:'',fmonth:'',facc:'',ftag:'',acc:'',tag:'',tagOpen:'',limit:150,taxYear:null,wipe:false,restore:false,backupText:''};
@@ -422,9 +423,15 @@ function applyRule(r){
 }
 function addRule(r){S.userRules=S.userRules.filter(x=>!(x.match===r.match&&x.dir===r.dir&&!!x.cat===!!r.cat&&(!r.cat||x.cat)));S.userRules.unshift(r);const n=applyRule(r);save();render();return n;}
 function activeRules(){return [...S.userRules,...DEFAULT_RULES.filter(r=>!S.disabledBuiltins.includes(r.match+'|'+r.dir))];}
+const isPP=t=>/paypal/i.test(t.name||'');
+const ppKey=t=>String(Math.round(Math.abs(t.amount)*100));
+const ppInfo=t=>isPP(t)&&t.amount<0?(S.ppNames||{})[ppKey(t)]:null;
 function categorize(t){
   if(S.overrides[t.id]) return S.overrides[t.id];
-  const own=S.accounts[normIban(t.account)], ctr=S.accounts[normIban(t.counter)];
+  {const pi=ppInfo(t); if(pi&&pi.cat) return pi.cat;}
+  const own=S.accounts[normIban(t.account)]; let ci=normIban(t.counter);
+  if(!S.accounts[ci]){const m=/spaarrekening\s+([A-Z])\s?(\d{3})[-\s]?(\d{5})/i.exec(t.desc||'');if(m) ci=m[1].toUpperCase()+m[2]+'-'+m[3];}
+  const ctr=S.accounts[ci];
   if(ctr){ if(isSaveAcc(own)) return 'Eigen rekening';
            if(ctr.type==='pot') return 'Belastingreservering';
            if(ctr.type==='spaar') return 'Sparen';
@@ -693,7 +700,7 @@ const BILL_CATS=new Set(['Wonen','Energie & water','Internet & telefoon','Verzek
 function recurring(){
   const groups={};
   for(const t of TX){ if(t.amount>=0||!inScope(t)||SAVING.has(t.cat)||IGNORE.has(t.cat)) continue;
-    const k=normName(t.name)||normName(t.desc); if(!k) continue; (groups[k]=groups[k]||[]).push(t); }
+    const k=isPP(t)?'paypal '+ppKey(t):(normName(t.name)||normName(t.desc)); if(!k) continue; (groups[k]=groups[k]||[]).push(t); }
   const res=[]; const lastData=TX.length?TX[0].date:todayISO();
   const FDAYS={maand:30.4,kwartaal:91,halfjaar:182,jaar:365};
   for(const [key,list] of Object.entries(groups)){
@@ -722,7 +729,7 @@ function recurring(){
     const amount=variable?median(amts.slice(-3)):rise?lastAmt:med;
     const factor={maand:1,kwartaal:1/3,halfjaar:1/6,jaar:1/12}[freq];
     const next=new Date(last.date); next.setDate(next.getDate()+Math.round(g));
-    res.push({key,variable,day:+last.date.slice(8),gap:g,account:normIban(last.account),name:last.name,cat:last.cat,freq,amount,monthly:amount*factor,last:last.date,next:next.toISOString().slice(0,10),count:sorted.length,rise});
+    res.push({key,variable,day:+last.date.slice(8),gap:g,account:normIban(last.account),name:isPP(last)?ppLabel(last):last.name,cat:last.cat,freq,amount,monthly:amount*factor,last:last.date,next:next.toISOString().slice(0,10),count:sorted.length,rise});
   }
   return res.sort((a,b)=>b.monthly-a.monthly);
 }
@@ -1193,7 +1200,7 @@ function billsCard(lastData,lastSal,nextSal,accRows,spendSet){
 /* ---------- Jaaroverzicht ---------- */
 const GROUPS=[['Vaste lasten',['Wonen','Energie & water','Internet & telefoon','Verzekeringen','Abonnementen','Sport','Studieschuld & leningen','Belastingen']],
   ['Dagelijks',['Boodschappen','Drogist','Vervoer','Kinderen','Huisdieren','Gezondheid']],
-  ['Vrije uitgaven',['Uit eten','Kleding','Winkelen','Huis & tuin','Hobby','Vakantie & uitjes','Schrijfkosten','Contant opgenomen']]];
+  ['Vrije uitgaven',['Uit eten','Kleding','Winkelen','PayPal','Huis & tuin','Hobby','Vakantie & uitjes','Schrijfkosten','Contant opgenomen']]];
 function groupOf(c){for(const [g,l] of GROUPS) if(l.includes(c)) return g; return 'Overig';}
 const nf0=new Intl.NumberFormat('nl-NL',{maximumFractionDigits:0});
 /* ---------- Een gewone maand & Besparen ---------- */
@@ -1307,7 +1314,7 @@ function viewGewoon(){
          <span class="num">${eur0.format(g.v)}</span>
          <span class="bonbar"><span style="width:${(Math.max(0,g.v)/max*100).toFixed(1)}%;background:${GCOL[g.g]}"></span></span></summary>
        <div class="bonitems">${g.cats.filter(x=>Math.abs(x.v)>=1).map(x=>`<button class="bonrow sub" data-act="nucat" data-cat="${esc(x.c)}" data-from="${from}"><span>${esc(x.c==='Overig'?'Nog niet ingedeeld':x.c==='Overboeking eigen rekening'?'Naar andere eigen rekeningen':x.c)}</span><span class="num">${eur0.format(x.v)}</span></button>`).join('')}
-       ${g.g==='Overig'?`<div class="bonhint"><span class="note">Hoe kleiner dit is, hoe beter de rest klopt.</span><button class="btn-small" data-act="todo-overig">Indelen</button></div>`:''}</div></details>`).join('')}
+       ${g.g==='Overig'?`<div class="bonhint"><span class="note">Hoe kleiner dit is, hoe beter de rest klopt.</span><button class="btn-small" data-act="todo-overig">Indelen</button></div>`:''}${g.cats.some(x=>x.c==='PayPal')?`<div class="bonhint"><span class="note">Wat zit er in PayPal?</span><button class="btn-small" data-act="tab" data-tab="vast">PayPal uitzoeken</button></div>`:''}</div></details>`).join('')}
        <div class="bonrow tot end"><span>Samen</span><span class="num out">${eur0.format(d.outTot)}</span></div></div>
      <p class="note">Tik op een groep voor de categorieën, en op een categorie voor de transacties.</p>
    </div>
@@ -1730,6 +1737,44 @@ function scopeBar(){
    ${ui.acc||ui.tag?`<div class="row"><span class="chip">${ui.tag?`<span class="dot" style="background:${tagColor(ui.tag)}"></span>Alleen label ${esc(ui.tag)}`:`Alleen ${esc((S.accounts[ui.acc]||{}).label||'')}`}</span><button class="btn-small" data-act="scopeall">Alles tonen</button></div>`:''}`;
 }
 
+function ppLabel(t){const i=(S.ppNames||{})[ppKey(t)];return i&&i.name?i.name+' (via PayPal)':'PayPal '+eur.format(Math.abs(t.amount));}
+function ppSeries(){
+  const lastData=TX.length?TX[0].date:todayISO(); const yr=addDays(lastData,-365);
+  const g={}; TX.filter(t=>isPP(t)&&t.amount<0&&inScope(t)).forEach(t=>{const k=ppKey(t);(g[k]=g[k]||[]).push(t);});
+  const out=[]; let looseYr=0, looseN=0;
+  for(const [k,l] of Object.entries(g)){ const so=[...l].sort((a,b)=>a.date.localeCompare(b.date)); const amt=k/100;
+    const gaps=so.slice(1).map((t,i)=>daysBetween(so[i].date,t.date)); const gm=gaps.length?median(gaps):null; const last=so[so.length-1].date;
+    const inYr=so.filter(t=>t.date>=yr).length;
+    let freq=null;
+    if(so.length>=2&&gm>=330&&gm<=400) freq='jaar';
+    else if(so.length>=3&&gm>=80&&gm<=100) freq='kwartaal';
+    else if(so.length>=3&&gm>=25&&gm<=36) freq='maand';
+    else if(so.length>=4&&gm<25) freq='vaker';
+    else if(so.length>=3) freq='af en toe';
+    if(!freq){ looseYr+=amt*inYr; looseN+=inYr; continue; }
+    const stopped=freq!=='af en toe'&&gm&&daysBetween(last,lastData)>gm*2+10;
+    const perMonth=freq==='jaar'?amt/12:freq==='kwartaal'?amt/3:freq==='maand'?amt:amt*inYr/12;
+    out.push({k,amt,n:so.length,freq,last,stopped,perMonth,info:(S.ppNames||{})[k]||{},first:so[0].date});
+  }
+  const ord={maand:0,jaar:1,kwartaal:2,vaker:3,'af en toe':4};
+  out.sort((a,b)=>(a.stopped-b.stopped)||(ord[a.freq]-ord[b.freq])||b.perMonth-a.perMonth);
+  return {series:out,looseYr,looseN};
+}
+function ppCard(){
+  const {series,looseYr,looseN}=ppSeries(); if(!series.length&&!looseN) return '';
+  const F={maand:'elke maand',jaar:'elk jaar',kwartaal:'elk kwartaal',vaker:'een paar keer per maand','af en toe':'af en toe'};
+  const act=series.filter(s=>!s.stopped); const tot=act.reduce((a,s)=>a+s.perMonth,0);
+  const skip=['Inkomsten','Royalties','Sparen','Contant gespaard','Belastingreservering','Eigen rekening','Overboeking eigen rekening','PayPal'];
+  const opts=c=>`<option value="">PayPal (zo laten)</option>`+allCats().filter(([x])=>!skip.includes(x)).map(([x])=>`<option ${x===c?'selected':''}>${esc(x)}</option>`).join('');
+  return `<details class="card stack" open><summary class="spread" style="cursor:pointer"><span><b style="font-family:var(--f-display);font-size:1.15rem">PayPal</b> <span class="note">${act.length} terugkerende bedragen</span></span><span class="num">${eur0.format(tot)} <span class="note">/mnd</span></span></summary>
+    <p class="note" style="margin-top:6px">ING laat bij PayPal niet zien waarvoor je betaalde. Kasboek zoekt daarom naar bedragen die steeds terugkomen: dat is bijna altijd een abonnement of een vaste aankoop. In de PayPal-app zie je bij <i>Automatische betalingen</i> wat bij welk bedrag hoort. Vul het hier in, en kies eventueel een categorie.</p>
+    <div>${series.map(s=>`<div class="rec" style="align-items:flex-start;${s.stopped?'opacity:.6':''}"><div style="min-width:0;flex:1" class="stack-s">
+        <div><b class="num">${eur.format(s.amt)}</b> · ${F[s.freq]}${s.stopped?' · <span class="note">lijkt gestopt</span>':''}<div class="meta">${s.n}× sinds ${fmtD(s.first)} ${s.first.slice(0,4)} · laatst ${fmtD(s.last)} ${s.last.slice(0,4)}</div></div>
+        <div class="row"><input data-ppname="${s.k}" value="${esc(s.info.name||'')}" placeholder="Wat is dit? bijv. Spotify" aria-label="Naam" style="flex:1;min-width:8em"><select data-ppcat="${s.k}" aria-label="Categorie">${opts(s.info.cat||'')}</select></div></div>
+      <div class="amt num">${s.perMonth<10?eur.format(s.perMonth):eur0.format(s.perMonth)} <span class="note">/mnd</span></div></div>`).join('')}</div>
+    ${looseN?`<p class="note">Daarnaast ${looseN} losse PayPal-betalingen in het afgelopen jaar, samen ${eur0.format(looseYr)}. Die staan onder <i>PayPal</i> bij de vrije uitgaven.</p>`:''}
+  </details>`;
+}
 function viewVast(){
   const rec=recurring(); const groups={maand:[],kwartaal:[],halfjaar:[],jaar:[]}; rec.forEach(r=>groups[r.freq].push(r));
   const monthlyTot=groups.maand.reduce((a,r)=>a+r.amount,0);
@@ -1752,7 +1797,7 @@ ${r.manual?'<span class="pill">zelf ingesteld</span>':''}${r.variable?'<span cla
     const recKeys=new Set(rec.map(r=>r.key));
     found=Object.values(g).filter(o=>!recKeys.has(o.k)).slice(0,8).map(o=>`<div class="todo"><div class="tt"><b>${esc(o.name)}</b><div class="note">${o.n}× · laatst ${fmtD(o.last)} ${o.last.slice(0,4)} · ${eur.format(o.amt)}</div></div>
       <div class="tb">${['maand','kwartaal','jaar'].map(f=>`<button class="btn-small" data-act="recuradd" data-key="${esc(o.k)}" data-f="${f}">${{maand:'Maandelijks',kwartaal:'Kwartaal',jaar:'Jaarlijks'}[f]}</button>`).join('')}</div></div>`).join('')||'<p class="note">Niets gevonden (of het staat er al tussen).</p>'; }
-  return `<div class="stack">
+  return `<div class="stack">${ppCard()}
     <div class="stats">
       <div class="stat"><h3>Vast per maand</h3><div class="v">${eur.format(monthlyTot)}</div></div>
       <div class="stat"><h3>Reserveren kwartaal/jaar</h3><div class="v">${eur.format(reserve)}<span class="note"> /mnd</span></div></div>
@@ -1772,6 +1817,24 @@ ${r.manual?'<span class="pill">zelf ingesteld</span>':''}${r.variable?'<span cla
   </div>`;
 }
 
+function savingsCard(tax){
+  const ids=Object.keys(COV).filter(i=>isSaveAcc(S.accounts[i])); if(!ids.length) return '';
+  const B=accountBalances(); const lastData=TX.length?TX[0].date:todayISO();
+  const rows=ids.map(i=>{const ser=B[i]||[];const last=ser.length?ser[ser.length-1]:null;
+    const cnt={};S.tx.filter(t=>normIban(t.account)===i&&t.counter).forEach(t=>{const k=normIban(t.counter);cnt[k]=(cnt[k]||0)+1;});
+    const link=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0]; const a=S.accounts[i];
+    return {i,a,bal:last?last.bal:null,date:last?last.date:COV[i].max,link:link?((S.accounts[link[0]]||{}).label||link[0]):''};})
+    .sort((x,y)=>(y.bal||0)-(x.bal||0)||y.date.localeCompare(x.date));
+  const tot=rows.reduce((a,r)=>a+(r.bal||0),0); const pot=rows.find(r=>r.a.type==='pot');
+  return `<details class="card stack" ${tax&&!pot?'open':''}><summary class="spread" style="cursor:pointer"><span><b>Spaarrekeningen</b> <span class="note">${rows.length}×${pot?` · belastingpot: ${esc(pot.a.label)}`:''}</span></span><span class="num">${eur0.format(tot)}</span></summary>
+    <div style="margin-top:8px">${rows.map(r=>`<div class="rec" style="align-items:flex-start"><div style="min-width:0;flex:1" class="stack-s">
+        <input data-acclabel="${esc(r.i)}" value="${esc(r.a.label)}" aria-label="Naam spaarrekening">
+        <div class="meta">${esc(r.i)}${r.link?' · vanaf '+esc(r.link):''} · laatst ${fmtD(r.date)} ${r.date.slice(0,4)}</div>
+        <select data-acctype="${esc(r.i)}" aria-label="Soort"><option value="spaar" ${r.a.type==='spaar'?'selected':''}>Spaarrekening</option><option value="pot" ${r.a.type==='pot'?'selected':''}>Belastingpot (royalty's)</option></select></div>
+      <div class="amt num">${r.bal==null?'–':eur.format(r.bal)}</div></div>`).join('')}</div>
+    <p class="note">De nummers zijn dezelfde als in de ING-app (bijvoorbeeld R 124-94552). Geef ze hier dezelfde naam als bij ING.${tax?' Zet je royalty-spaarrekening op <b>Belastingpot</b>: dan telt alles wat je erop zet als opzij gezet voor de belasting.':''} Het saldo is de stand bij de laatste beweging in je afschrift.</p>
+  </details>`;
+}
 function viewDoelen(){
   const ms=months(); const cur=ui.month&&ms.includes(ui.month)?ui.month:ms[ms.length-1];
   const s=cur?monthSum(cur):{bycat:{}};
@@ -1784,7 +1847,7 @@ function viewDoelen(){
   const atm=TX.filter(t=>t.cat==='Contant opgenomen'&&afterSalary(t.date,sd)).slice(0,6);
   const pl=plannedOpen(); const plDone=(S.planned||[]).filter(p=>p.done).slice(-3);
   const nextPer=(()=>{const p=periodOf(todayISO());return p?addDays(p.end,1):todayISO();})();
-  return `<div class="stack">
+  return `<div class="stack">${savingsCard()}
    <div class="card stack"><div class="spread"><h2>Geplande uitgaven</h2>${pl.length?`<span class="note">samen <span class="num">${eur0.format(pl.reduce((a,p)=>a+(+p.amount||0),0))}</span></span>`:''}</div>
      <p class="note">Grote uitgaven die eraan komen, zoals een nieuw bed. Ze tellen mee in "Komt nog" en in de vooruitblik bij Inzicht, zodat je ziet wat er die maand overblijft.</p>
      ${pl.length?`<div>${pl.map(p=>{const d=daysBetween(todayISO(),p.date);const mleft=Math.max(1,Math.round(d/30.4));return `<div class="rec"><div style="min-width:0"><b>${esc(p.name)}</b>${p.tag?`<span class="pill">${esc(p.tag)}</span>`:''}${p.from==='pot'?'<span class="pill">uit spaarpot</span>':''}
@@ -1845,7 +1908,7 @@ function viewTax(){
   const plats=Object.entries(byPlat).sort((a,b)=>b[1]-a[1]); const pmax=Math.max(1,...plats.map(p=>p[1]));
   const pcol=p=>PLAT_COLORS[plats.findIndex(x=>x[0]===p)%PLAT_COLORS.length];
   const short=c.total-c.reserved; const pct=c.total?Math.min(100,c.reserved/c.total*100):100;
-  return `<div class="stack">
+  return `<div class="stack">${savingsCard(true)}
    <div class="spread"><h2>Royalty's ${y}</h2>
      ${years.length>1?`<select id="taxYear" aria-label="Jaar">${years.map(x=>`<option ${x===y?'selected':''}>${x}</option>`).join('')}</select>`:''}</div>
    ${y!==TAX.year?`<div class="banner"><div>De belastingschatting gebruikt de tarieven van <b>${TAX.year}</b>. Voor ${y} wijken die iets af.</div></div>`:''}
@@ -2318,6 +2381,8 @@ document.addEventListener('change',e=>{
   if(t.id==='taxYear'){ui.taxYear=+t.value;render();}
   if(t.matches('input[data-builtin]')){const k=t.dataset.builtin;S.disabledBuiltins=t.checked?S.disabledBuiltins.filter(x=>x!==k):[...S.disabledBuiltins,k];save();rebuild();}
   if(t.id==='t-za'){const y=ui.taxYear;S.tax[y]={...(S.tax[y]||{}),za:t.checked};save();render();}
+  if(t.matches('input[data-ppname]')){S.ppNames=S.ppNames||{};const k=t.dataset.ppname;S.ppNames[k]={...(S.ppNames[k]||{}),name:t.value.trim()};save();render();}
+  if(t.matches('select[data-ppcat]')){S.ppNames=S.ppNames||{};const k=t.dataset.ppcat;S.ppNames[k]={...(S.ppNames[k]||{}),cat:t.value};save();render();}
   if(t.matches('select[data-acctype]')){S.accounts[t.dataset.acctype].type=t.value;save();render();}
   if(t.matches('input[data-acclabel]')){S.accounts[t.dataset.acclabel].label=t.value.trim()||S.accounts[t.dataset.acclabel].label;save();}
   if(t.matches('input[data-budget]')){const v=+t.value;if(v>0)S.budgets[t.dataset.budget]=v;else delete S.budgets[t.dataset.budget];save();}
