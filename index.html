@@ -246,7 +246,7 @@ ol.steps{margin:6px 0 0;padding-left:1.2em;color:var(--muted);font-size:.9rem;di
 <div id="toast" class="toast" hidden></div>
 
 <script>
-const VERSION='2026-11-06g';
+const VERSION='2026-11-06i';
 const clone=o=>JSON.parse(JSON.stringify(o));
 /* ---------- Basis ---------- */
 const STORE='kasboek.v1', LOCAL='kasboek.device';
@@ -1775,6 +1775,25 @@ function ppCard(){
     ${looseN?`<p class="note">Daarnaast ${looseN} losse PayPal-betalingen in het afgelopen jaar, samen ${eur0.format(looseYr)}. Die staan onder <i>PayPal</i> bij de vrije uitgaven.</p>`:''}
   </details>`;
 }
+function vastPerAcc(rec){
+  const accs=spendAccounts(); if(accs.length<2) return '';
+  const head=`<div class="spread"><span class="note">${ui.acc?'Je ziet nu alleen de vaste lasten van deze rekening.':'Bekijk de vaste lasten van één rekening:'}</span><div class="row">${scopeSelect()}</div></div>`;
+  if(ui.acc) return head+`<div class="row"><span class="chip">Alleen ${esc((S.accounts[ui.acc]||{}).label||'')}</span><button class="btn-small" data-act="scopeall">Alle rekeningen</button></div>`;
+  const by={}; for(const r of rec){const k=r.account||'?';(by[k]=by[k]||[]).push(r);}
+  // vaste overboekingen naar eigen rekeningen (bijv. elke maand naar de vaste-lastenrekening)
+  const last=TX.length?TX[0].date:todayISO(); const since=addDays(last,-183); const tr={};
+  for(const t of TX){ if(t.date<since||t.amount>=0||!['Eigen rekening','Overboeking eigen rekening'].includes(t.cat)) continue; const to=normIban(t.counter); if(!S.accounts[to]||isSaveAcc(S.accounts[to])) continue;
+    const k=normIban(t.account)+'>'+to; (tr[k]=tr[k]||{from:normIban(t.account),to,sum:0,ms:new Set()}); tr[k].sum-=t.amount; tr[k].ms.add(t.date.slice(0,7)); }
+  const fixedTr=Object.values(tr).filter(x=>x.ms.size>=4&&!isSaveAcc(S.accounts[x.from])).map(x=>({...x,per:x.sum/6}));
+  const rows=accs.map(([i,a])=>{const l=by[i]||[];const out=fixedTr.filter(x=>x.from===i);const inn=fixedTr.filter(x=>x.to===i);return {i,a,l,out,inn,tot:l.reduce((x,r)=>x+r.monthly,0)};}).filter(x=>x.l.length||x.out.length).sort((a,b)=>b.tot-a.tot);
+  return head+`<div class="card stack"><h2>Per rekening</h2>
+    <div>${rows.map(x=>`<button class="rec" style="width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);border-radius:0;cursor:pointer;font:inherit;color:inherit" data-act="vastacc" data-iban="${esc(x.i)}">
+      <div style="min-width:0"><b>${esc(x.a.label)}</b><div class="meta">${x.l.length?`${x.l.length} vaste betalingen · o.a. ${x.l.slice(0,3).map(r=>esc(r.name)).join(', ')}`:'geen vaste betalingen'}</div>
+        ${x.out.map(o=>`<div class="meta">→ elke maand ongeveer ${eur0.format(o.per)} naar ${esc((S.accounts[o.to]||{}).label||o.to)}</div>`).join('')}
+        ${x.inn.map(o=>`<div class="meta">← elke maand ongeveer ${eur0.format(o.per)} van ${esc((S.accounts[o.from]||{}).label||o.from)}</div>`).join('')}</div>
+      <div class="amt"><div class="num">${eur0.format(x.tot)} <span class="note">/mnd</span></div><span class="note">bekijk ›</span></div></button>`).join('')}</div>
+    <p class="note">Per maand gerekend: bedragen per kwartaal of jaar zijn omgerekend naar een maandbedrag. Heten je rekeningen nog "Rekening …1234"? Geef ze een naam bij <i>Instellingen → Rekeningen</i>, bijvoorbeeld "Vaste lasten" of "Idonea".</p></div>`;
+}
 function viewVast(){
   const rec=recurring(); const groups={maand:[],kwartaal:[],halfjaar:[],jaar:[]}; rec.forEach(r=>groups[r.freq].push(r));
   const monthlyTot=groups.maand.reduce((a,r)=>a+r.amount,0);
@@ -1785,7 +1804,7 @@ function viewVast(){
   const block=(k)=>groups[k].length?`<div class="card"><h2>${titles[k]}</h2>
     ${groups[k].map(r=>`<div class="rec"><div style="min-width:0"><b>${esc(r.name)}</b><span class="pill">${esc(r.cat)}</span>${r.rise?`<span class="pill rise">duurder</span>`:''}
 ${r.manual?'<span class="pill">zelf ingesteld</span>':''}${r.variable?'<span class="pill">wisselend</span>':''}
-      <div class="meta">${r.count}× gezien · laatst ${fmtD(r.last)} · volgende rond ${fmtD(r.next)}${r.rise?` · was ${eur.format(r.rise.from)}`:''}</div>
+      <div class="meta">${!ui.acc&&spendAccounts().length>1&&r.account?esc((S.accounts[r.account]||{}).label||r.account)+' · ':''}${r.count}× gezien · laatst ${fmtD(r.last)} · volgende rond ${fmtD(r.next)}${r.rise?` · was ${eur.format(r.rise.from)}`:''}</div>
       <div class="row" style="gap:6px;margin-top:6px"><select data-recurset="${esc(r.key)}" aria-label="Hoe vaak" style="font-size:.8rem;padding:3px 8px;border-radius:999px">${['maand','kwartaal','halfjaar','jaar'].map(f=>`<option value="${f}" ${r.freq===f?'selected':''}>${{maand:'Maandelijks',kwartaal:'Per kwartaal',halfjaar:'Per half jaar',jaar:'Per jaar'}[f]}</option>`).join('')}</select>
         <button class="btn-small" data-act="recurno" data-key="${esc(r.key)}">Geen vaste last</button>${r.manual?`<button class="btn-small" data-act="recurauto" data-key="${esc(r.key)}">Automatisch</button>`:''}</div></div>
       <div class="amt"><div class="num">${r.variable?'± ':''}${eur.format(r.amount)}</div>${k!=='maand'?`<div class="meta num">${eur.format(r.monthly)}/mnd</div>`:''}</div></div>`).join('')}</div>`:'';
@@ -1797,7 +1816,7 @@ ${r.manual?'<span class="pill">zelf ingesteld</span>':''}${r.variable?'<span cla
     const recKeys=new Set(rec.map(r=>r.key));
     found=Object.values(g).filter(o=>!recKeys.has(o.k)).slice(0,8).map(o=>`<div class="todo"><div class="tt"><b>${esc(o.name)}</b><div class="note">${o.n}× · laatst ${fmtD(o.last)} ${o.last.slice(0,4)} · ${eur.format(o.amt)}</div></div>
       <div class="tb">${['maand','kwartaal','jaar'].map(f=>`<button class="btn-small" data-act="recuradd" data-key="${esc(o.k)}" data-f="${f}">${{maand:'Maandelijks',kwartaal:'Kwartaal',jaar:'Jaarlijks'}[f]}</button>`).join('')}</div></div>`).join('')||'<p class="note">Niets gevonden (of het staat er al tussen).</p>'; }
-  return `<div class="stack">${ppCard()}
+  return `<div class="stack">${vastPerAcc(rec)}${ppCard()}
     <div class="stats">
       <div class="stat"><h3>Vast per maand</h3><div class="v">${eur.format(monthlyTot)}</div></div>
       <div class="stat"><h3>Reserveren kwartaal/jaar</h3><div class="v">${eur.format(reserve)}<span class="note"> /mnd</span></div></div>
@@ -1823,7 +1842,8 @@ function savingsCard(tax){
   const rows=ids.map(i=>{const ser=B[i]||[];const last=ser.length?ser[ser.length-1]:null;
     const cnt={};S.tx.filter(t=>normIban(t.account)===i&&t.counter).forEach(t=>{const k=normIban(t.counter);cnt[k]=(cnt[k]||0)+1;});
     const link=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0]; const a=S.accounts[i];
-    return {i,a,bal:last?last.bal:null,date:last?last.date:COV[i].max,link:link?((S.accounts[link[0]]||{}).label||link[0]):''};})
+    const man=(S.manualBal||{})[i]; const useMan=man&&(!last||man.date>=last.date);
+    return {i,a,man:useMan,bal:useMan?+man.amount:last?last.bal:null,fileBal:last?last.bal:null,date:useMan?man.date:last?last.date:COV[i].max,link:link?((S.accounts[link[0]]||{}).label||link[0]):''};})
     .sort((x,y)=>(y.bal||0)-(x.bal||0)||y.date.localeCompare(x.date));
   const tot=rows.reduce((a,r)=>a+(r.bal||0),0); const pot=rows.find(r=>r.a.type==='pot');
   return `<details class="card stack" ${tax&&!pot?'open':''}><summary class="spread" style="cursor:pointer"><span><b>Spaarrekeningen</b> <span class="note">${rows.length}×${pot?` · belastingpot: ${esc(pot.a.label)}`:''}</span></span><span class="num">${eur0.format(tot)}</span></summary>
@@ -1831,7 +1851,10 @@ function savingsCard(tax){
         <input data-acclabel="${esc(r.i)}" value="${esc(r.a.label)}" aria-label="Naam spaarrekening">
         <div class="meta">${esc(r.i)}${r.link?' · vanaf '+esc(r.link):''} · saldo op ${fmtD(r.date)} ${r.date.slice(0,4)}</div>
         <select data-acctype="${esc(r.i)}" aria-label="Soort"><option value="spaar" ${r.a.type==='spaar'?'selected':''}>Spaarrekening</option><option value="pot" ${r.a.type==='pot'?'selected':''}>Belastingpot (royalty's)</option></select></div>
-      <div class="amt num">${r.bal==null?'–':eur.format(r.bal)}</div></div>`).join('')}</div>
+      <div class="amt"><div class="num">${r.bal==null?'–':eur.format(r.bal)}</div>${r.man?'<div class="note">zelf ingevuld</div>':''}
+        <details style="margin-top:4px"><summary class="note" style="cursor:pointer">aanpassen</summary>
+          <input type="number" step="0.01" inputmode="decimal" data-manbal="${esc(r.i)}" value="${r.man?r.bal:''}" placeholder="echt saldo" style="width:8em;margin-top:4px" aria-label="Echt saldo">
+          <div class="note" style="max-width:10em">${r.man?'Leeg maken = weer het bestand volgen.':'Vul in wat de ING-app nu zegt.'}${r.fileBal!=null&&r.man?` Bestand: ${eur.format(r.fileBal)}.`:''}</div></details></div></div>`).join('')}</div>
     <p class="note">De nummers zijn dezelfde als in de ING-app (bijvoorbeeld R 124-94552). Geef ze hier dezelfde naam als bij ING. Het bedrag is het saldo na de laatste transactie in je ingeladen afschrift (zie de datum). Een spaarrekening waar sinds de begindatum van je download niets op gebeurde, staat niet in het bestand van ING en dus ook niet hier.</p>
   </details>`;
 }
@@ -2262,6 +2285,7 @@ document.addEventListener('click',async e=>{
   if(a==='addrule'){const m=$('#r-match').value.trim().toLowerCase(),cat=$('#r-cat').value,tg=$('#r-tag').value;if(!m)return;
     if(!cat&&!tg){toast('Kies een categorie, een label, of allebei.');return;}
     const n=addRule({match:m,dir:$('#r-dir').value,cat,tags:tg?[tg]:[]});toast(n?`Regel toegevoegd, geldt voor ${n} transacties.`:'Regel toegevoegd, maar er is nog geen transactie die erop lijkt. Controleer de tekst.');}
+  if(a==='vastacc'){ui.acc=b.dataset.iban;ui.tag='';render();window.scrollTo(0,0);}
   if(a==='scopeall'){ui.acc='';ui.tag='';ui.month=null;render();}
   if(a==='clearfrom'){ui.fromDate='';ui.toDate='';ui.fmerch='';render();}
   if(a==='merch'){ui.tab='transacties';ui.fmerch=b.dataset.m;ui.fromDate=b.dataset.from;ui.toDate=b.dataset.to;ui.q='';ui.fcat='';ui.ftag='';ui.fmonth='';ui.facc=ui.acc;ui.limit=150;render();window.scrollTo(0,0);}
