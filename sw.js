@@ -1,5 +1,5 @@
 // Kasboek service worker — bewaart de app zelf offline. Bankgegevens en Dropbox gaan hier niet doorheen.
-const CACHE = 'kasboek-2026-11-06j';
+const CACHE = 'kasboek-2026-11-06k';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

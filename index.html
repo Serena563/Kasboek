@@ -246,6 +246,11 @@ nav.tabs button[aria-selected=true]{background:var(--surface);color:var(--ink);b
 .pill{border-color:var(--line);font-size:.74rem}
 .chip{background:var(--accent-soft);color:var(--ink)}
 input,select,textarea{border-radius:10px}
+/* wat moet blijven staan */
+.resacc>summary{row-gap:2px}
+.resline{grid-column:1 / -1;display:flex;justify-content:space-between;font-size:.9rem;color:var(--muted);padding-left:2px}
+.resline .num{color:var(--ink)} .resline .num.in{color:var(--in)} .resline .num.out{color:var(--out)}
+.reshead{display:flex;justify-content:space-between;font-weight:600;font-size:.88rem;padding:10px 8px 2px}
 /* uitleg die is weggevouwen */
 details.why{margin-top:2px}
 details.why>summary{list-style:none;cursor:pointer;color:var(--muted);font-size:.84rem;display:inline-flex;align-items:center;gap:6px}
@@ -309,7 +314,7 @@ details.fold>.card>h2:first-child,details.fold>.card>.spread:first-child>h2,deta
 <div id="toast" class="toast" hidden></div>
 
 <script>
-const VERSION='2026-11-06j';
+const VERSION='2026-11-06k';
 const clone=o=>JSON.parse(JSON.stringify(o));
 /* ---------- Basis ---------- */
 const STORE='kasboek.v1', LOCAL='kasboek.device';
@@ -1152,6 +1157,9 @@ function viewNu(){
   const pl=plannedOpen().filter(p=>p.date>lastData&&p.date<=comingEnd&&p.from!=='pot').map(p=>({name:p.name+' (gepland)',date:p.date,amount:+p.amount}));
   const coming=[...rec,...pl].sort((a,b)=>a.date.localeCompare(b.date)); const comingTot=coming.reduce((a,c)=>a+c.amount,0);
   const spendBal=accRows.filter(r=>spendSet.has(r.i)).reduce((a,r)=>a+r.end,0);
+  const RES=accRows.length?reserveData(lastData,lastSal,nextSal,accRows):null;
+  const keepSpend=RES?RES.rows.filter(r=>spendSet.has(r.i)).reduce((x,r)=>x+r.keep,0)+RES.plannedTot:0;
+  const freeR=RES?RES.rows.filter(r=>spendSet.has(r.i)).reduce((x,r)=>x+r.end,0)-keepSpend:0;
   const free=spendBal-comingTot; const stale=accRows.filter(r=>daysBetween(r.last,lastData)>3); const daysLeft=nextSal?Math.max(1,daysBetween(lastData,nextSal)):null;
   const winLabel=ui.win==='sal'?`sinds ${esc(salName)} op ${fmtD(from)}`:ui.win==='maand'?`deze maand (vanaf ${fmtD(from)})`:`de afgelopen ${ui.win==='14'?'2 weken':'4 weken'}`;
   const jordyMissing=!S.sample&&!ui.acc&&Object.values(S.accounts).filter(a=>a.type==='betaal').length<2;
@@ -1169,13 +1177,15 @@ function viewNu(){
        ${multi?'<p class="note" style="margin-top:8px">"Nog vrij" is het saldo van de rekeningen die meetellen, min wat er nog afgaat vóór je salaris. Zet de vaste-lastenrekening op <i>telt niet mee</i> als dat geld al bestemd is.</p>':''}
        ${jordyMissing?'<p class="note">Jordy\'s rekening staat er nog niet in.</p>':''}</details>`;
      if(sal) return `<div class="card hero">
-       <p class="lead">Nog vrij te besteden tot je salaris op ${fmtD(nextSal)}</p>
-       <div class="free ${free<0?'neg':''}">${eur0.format(free)}</div>
-       <p class="say">${free>=0?`Dat is ongeveer <b>${eur.format(free/daysLeft)}</b> per dag, voor ${daysLeft} ${daysLeft===1?'dag':'dagen'}.`:`Er gaat tot je salaris meer af dan er nu op staat. Kijk bij <i>Vaste lasten deze maand</i> wat er nog komt.`}</p>
-       <div class="facts"><div><span>Op de rekening${multi?'en':''}</span><b>${eur0.format(endBal)}</b></div><div><span>Gaat nog af</span><b>${eur0.format(comingTot)}</b></div></div>
+       <p class="lead">Vrij voor vrije uitgaven tot je salaris op ${fmtD(nextSal)}</p>
+       <div class="free ${freeR<0?'neg':''}">${freeR<0?'− ':''}${eur0.format(Math.abs(freeR))}</div>
+       <p class="say">${freeR>=0?`Dat is ongeveer <b>${eur.format(freeR/daysLeft)}</b> per dag, voor ${daysLeft} ${daysLeft===1?'dag':'dagen'}. Vaste lasten en boodschappen zijn hier al vanaf.`:`Er moet tot je salaris meer blijven staan dan er nu op staat. Hieronder zie je per rekening waar het zit.`}</p>
+       <div class="facts"><div><span>Op de rekening${multi?'en':''}</span><b>${eur0.format(endBal)}</b></div><div><span>Moet blijven staan</span><b>${eur0.format(keepSpend)}</b></div></div>
        ${accList}</div>`;
      return `<div class="card hero"><p class="lead">Op de rekening${multi?'en':''}</p><div class="free ${endBal<0?'neg':''}">${eur0.format(endBal)}</div>${accList}</div>`;
    })():'<div class="card"><p class="note">Deze bestanden hebben geen saldo-kolom. Download de CSV opnieuw uit Mijn ING; daar staat "Saldo na mutatie" standaard in.</p></div>'}
+
+   ${RES?reserveCard(RES,nextSal&&nextSal>lastData):''}
 
    ${(()=>{const todo=todoList({lastData,lastSal,nextSal,accRows,free,daysLeft}); if(!todo.length) return '';
      const row=t=>`<div class="todo"><div class="tt">${t.text}</div><div class="tb">${t.btn}<button class="btn-small" data-act="dismiss" data-key="${esc(t.key)}" title="Gedaan, niet meer tonen">✓ Gedaan</button></div></div>`;
@@ -1243,6 +1253,70 @@ function viewNu(){
   </div>`;
 }
 
+/* ---------- Wat moet blijven staan tot het salaris ---------- */
+const recKey=t=>isPP(t)?'paypal '+ppKey(t):(normName(t.name)||normName(t.desc));
+const DAILY=()=>GROUPS[1][1];
+function reserveData(lastData,lastSal,nextSal,accRows){
+  const cur=periodOf(lastData);
+  const ws=lastSal&&nextSal&&nextSal>lastData?lastSal:(cur?cur.start:lastData.slice(0,8)+'01');
+  const we=lastSal&&nextSal&&nextSal>lastData?addDays(nextSal,-1):(cur?cur.end:lastData.slice(0,8)+'28');
+  const daysTot=Math.max(1,daysBetween(ws,we)+1), daysGone=Math.min(daysTot,Math.max(0,daysBetween(ws,lastData)+1));
+  // vaste lasten die nog moeten komen, per rekening
+  const bills={};
+  for(const r of recurring()){
+    const paid=TX.some(t=>t.amount<0&&t.date>=ws&&t.date<=we&&recKey(t)===r.key);
+    if(paid) continue;
+    let due=null;
+    if(r.freq==='maand'){ for(let d=addDays(lastData,1);d<=we&&!due;d=addDays(d,1)){ if(+d.slice(8)===Math.min(r.day,dim(+d.slice(0,4),+d.slice(5,7)))) due=d; } }
+    else if(r.next>lastData&&r.next<=we) due=r.next;
+    if(!due) continue;
+    const a=r.account||'?'; (bills[a]=bills[a]||[]).push({name:r.name,amount:r.amount,due});
+  }
+  // dagelijkse uitgaven: wat er normaal per maand van deze rekening gaat, min wat er al uit is
+  const full=months().filter(k=>PIDX[k]&&PIDX[k].end<ws).slice(-6);
+  const rows=accRows.map(r=>{
+    const typ={}, spent={};
+    for(const c of DAILY()){
+      const per=full.map(k=>-TX.filter(t=>t.mk===k&&t.cat===c&&normIban(t.account)===r.i).reduce((x,t)=>x+t.amount,0));
+      typ[c]=per.length?Math.max(0,median(per)):0;
+      spent[c]=Math.max(0,-TX.filter(t=>t.date>=ws&&t.date<=lastData&&t.cat===c&&normIban(t.account)===r.i).reduce((x,t)=>x+t.amount,0));
+    }
+    const daily=DAILY().map(c=>({c,typ:typ[c],spent:spent[c],need:Math.max(0,typ[c]-spent[c])})).filter(x=>x.need>=15);
+    const bl=(bills[r.i]||[]).sort((a,b)=>a.due.localeCompare(b.due));
+    const billTot=bl.reduce((x,b)=>x+b.amount,0), dailyTot=daily.reduce((x,d)=>x+d.need,0);
+    const keep=billTot+dailyTot;
+    return {...r,bills:bl,billTot,daily,dailyTot,keep,free:r.end-keep};
+  });
+  // welke rekeningen normaal worden aangevuld vanaf een andere eigen rekening
+  const since=addDays(lastData,-183), feed={};
+  for(const t of TX){ if(t.date<since||t.amount<=0||t.cat!=='Eigen rekening') continue; const fr=normIban(t.counter); if(!S.accounts[fr]||isSaveAcc(S.accounts[fr])) continue;
+    const k=normIban(t.account); (feed[k]=feed[k]||{}); (feed[k][fr]=feed[k][fr]||new Set()).add(t.date.slice(0,7)); }
+  rows.forEach(r=>{ r.feeds=Object.entries(feed[r.i]||{}).filter(([,m])=>m.size>=4).map(([fr])=>(S.accounts[fr]||{}).label||fr); });
+  const planned=plannedOpen().filter(p=>p.date>lastData&&p.date<=we&&p.from!=='pot').map(p=>({name:p.name,amount:+p.amount,date:p.date}));
+  return {ws,we,rows,planned,plannedTot:planned.reduce((x,p)=>x+p.amount,0),daysTot,daysGone};
+}
+function reserveCard(R,nextSal){
+  if(!R.rows.length) return '';
+  const till=nextSal?`tot je salaris op ${fmtD(addDays(R.we,1))}`:`tot ${fmtD(R.we)}`;
+  const accRow=r=>`<details class="bongrp resacc"><summary class="bonrow"><span class="nm"><b>${esc(r.label)}</b><span class="chev" aria-hidden="true">›</span></span><span class="num">${eur0.format(r.end)}</span>
+      <span class="resline"><span>Moet blijven staan</span><span class="num">${eur0.format(r.keep)}</span></span>
+      <span class="resline"><span>${r.free>=0?'Vrij':'Komt tekort'}</span><span class="num ${r.free>=0?'in':'out'}">${eur0.format(Math.abs(r.free))}</span></span>${r.free<0&&r.feeds.length?`<span class="resline" style="font-size:.82rem">Wordt normaal aangevuld vanaf ${r.feeds.map(esc).join(' en ')}</span>`:''}</summary>
+    <div class="bonitems">
+      ${r.bills.length?`<div class="reshead"><span>Vaste lasten die nog komen</span><span class="num">${eur0.format(r.billTot)}</span></div>
+        ${r.bills.map(b=>`<div class="bonrow sub" style="cursor:default"><span>${esc(b.name)} <span class="note">rond ${fmtD(b.due)}</span></span><span class="num">${eur0.format(b.amount)}</span></div>`).join('')}`:''}
+      ${r.daily.length?`<div class="reshead"><span>Dagelijks nog nodig</span><span class="num">${eur0.format(r.dailyTot)}</span></div>
+        ${r.daily.map(d=>`<div class="bonrow sub" style="cursor:default"><span>${esc(d.c)} <span class="note">normaal ${eur0.format(d.typ)}, al ${eur0.format(d.spent)}</span></span><span class="num">${eur0.format(d.need)}</span></div>`).join('')}`:''}
+      ${!r.bills.length&&!r.daily.length?'<p class="note" style="padding:8px 0">Van deze rekening hoeft tot het salaris niets meer vast af te gaan.</p>':''}
+    </div></details>`;
+  const keepTot=R.rows.reduce((x,r)=>x+r.keep,0)+R.plannedTot, endTot=R.rows.reduce((x,r)=>x+r.end,0), freeTot=endTot-keepTot;
+  return `<div class="card stack"><div><h2>Wat moet blijven staan</h2><p class="sub">Per rekening, ${till}.</p></div>
+    <div class="bon">${R.rows.map(accRow).join('')}
+      ${R.planned.length?`<div class="bonrow"><span>Gepland: ${R.planned.map(p=>esc(p.name)).join(', ')}</span><span class="num">${eur0.format(R.plannedTot)}</span></div>`:''}
+      <div class="bonrow tot end"><span>Vrij voor vrije uitgaven</span><span class="num ${freeTot<0?'out':'in'}">${freeTot<0?'− ':''}${eur0.format(Math.abs(freeTot))}</span></div></div>
+    <p class="note keep">Moet blijven staan = de vaste lasten die nog van die rekening afgaan, plus wat er normaal nog aan boodschappen en andere dagelijkse dingen af gaat. Wat overblijft is vrij voor <b>vrije uitgaven</b>: uit eten en koffie, kleding, winkelen, huis en tuin, hobby, uitjes en vakantie, PayPal-aankopen, schrijfkosten en contant geld.</p>
+    <p class="note">Geld dat jullie tussen je eigen rekeningen overmaken, telt niet mee: dat verschuift alleen. Daarom kan één rekening tekort komen terwijl het samen klopt. Kijk dan vooral naar het totaal. "Normaal" is het middelste bedrag van de afgelopen zes maanden, per rekening. Is een rekening al verder dan normaal, dan rekent Kasboek met nul en niet met minder. Tik op een rekening om te zien waar het bedrag uit bestaat.</p>
+  </div>`;
+}
 function billsCard(lastData,lastSal,nextSal,accRows,spendSet){
   const cur=periodOf(lastData);
   const ws=lastSal&&nextSal&&nextSal>lastData?lastSal:(cur?cur.start:lastData.slice(0,8)+'01');
@@ -1250,7 +1324,7 @@ function billsCard(lastData,lastSal,nextSal,accRows,spendSet){
   const multi=accRows.length>1;
   const items=[];
   for(const r of recurring()){
-    const paid=TX.filter(t=>t.amount<0&&t.date>=ws&&t.date<=we&&(normName(t.name)||normName(t.desc))===r.key);
+    const paid=TX.filter(t=>t.amount<0&&t.date>=ws&&t.date<=we&&recKey(t)===r.key);
     let due=null;
     if(r.freq==='maand'){ for(let d=ws;d<=we&&!due;d=addDays(d,1)){ if(+d.slice(8)===Math.min(r.day,dim(+d.slice(0,4),+d.slice(5,7)))) due=d; } }
     else if(r.next>=ws&&r.next<=we) due=r.next;
