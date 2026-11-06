@@ -246,7 +246,7 @@ ol.steps{margin:6px 0 0;padding-left:1.2em;color:var(--muted);font-size:.9rem;di
 <div id="toast" class="toast" hidden></div>
 
 <script>
-const VERSION='2026-11-06f';
+const VERSION='2026-11-06g';
 const clone=o=>JSON.parse(JSON.stringify(o));
 /* ---------- Basis ---------- */
 const STORE='kasboek.v1', LOCAL='kasboek.device';
@@ -1829,10 +1829,10 @@ function savingsCard(tax){
   return `<details class="card stack" ${tax&&!pot?'open':''}><summary class="spread" style="cursor:pointer"><span><b>Spaarrekeningen</b> <span class="note">${rows.length}×${pot?` · belastingpot: ${esc(pot.a.label)}`:''}</span></span><span class="num">${eur0.format(tot)}</span></summary>
     <div style="margin-top:8px">${rows.map(r=>`<div class="rec" style="align-items:flex-start"><div style="min-width:0;flex:1" class="stack-s">
         <input data-acclabel="${esc(r.i)}" value="${esc(r.a.label)}" aria-label="Naam spaarrekening">
-        <div class="meta">${esc(r.i)}${r.link?' · vanaf '+esc(r.link):''} · laatst ${fmtD(r.date)} ${r.date.slice(0,4)}</div>
+        <div class="meta">${esc(r.i)}${r.link?' · vanaf '+esc(r.link):''} · saldo op ${fmtD(r.date)} ${r.date.slice(0,4)}</div>
         <select data-acctype="${esc(r.i)}" aria-label="Soort"><option value="spaar" ${r.a.type==='spaar'?'selected':''}>Spaarrekening</option><option value="pot" ${r.a.type==='pot'?'selected':''}>Belastingpot (royalty's)</option></select></div>
       <div class="amt num">${r.bal==null?'–':eur.format(r.bal)}</div></div>`).join('')}</div>
-    <p class="note">De nummers zijn dezelfde als in de ING-app (bijvoorbeeld R 124-94552). Geef ze hier dezelfde naam als bij ING.${tax?' Zet je royalty-spaarrekening op <b>Belastingpot</b>: dan telt alles wat je erop zet als opzij gezet voor de belasting.':''} Het saldo is de stand bij de laatste beweging in je afschrift.</p>
+    <p class="note">De nummers zijn dezelfde als in de ING-app (bijvoorbeeld R 124-94552). Geef ze hier dezelfde naam als bij ING. Het bedrag is het saldo na de laatste transactie in je ingeladen afschrift (zie de datum). Een spaarrekening waar sinds de begindatum van je download niets op gebeurde, staat niet in het bestand van ING en dus ook niet hier.</p>
   </details>`;
 }
 function viewDoelen(){
@@ -1898,6 +1898,13 @@ function viewDoelen(){
   </div>`;
 }
 
+function potPicker(){
+  const ids=Object.keys(S.accounts).filter(i=>isSaveAcc(S.accounts[i])); if(!ids.length) return '';
+  const pot=ids.find(i=>S.accounts[i].type==='pot');
+  return `<div class="card stack"><div class="spread"><b>Belastingpot</b><select data-act-pot aria-label="Welke spaarrekening is je belastingpot?">
+    <option value="">Geen spaarrekening</option>${ids.map(i=>`<option value="${esc(i)}" ${i===pot?'selected':''}>${esc(S.accounts[i].label)} (${esc(i)})</option>`).join('')}</select></div>
+    <p class="note">Kies de spaarrekening waar je geld voor de belasting op zet. Wat je daarop zet, telt hieronder als opzij gezet. Je spaarrekeningen zelf zie je bij <i>Sparen & plannen</i>.</p></div>`;
+}
 function viewTax(){
   const years=[...new Set(TX.map(t=>+t.date.slice(0,4)))].sort();
   if(!ui.taxYear||!years.includes(ui.taxYear)) ui.taxYear=years.includes(TAX.year)?TAX.year:years[years.length-1];
@@ -1908,7 +1915,7 @@ function viewTax(){
   const plats=Object.entries(byPlat).sort((a,b)=>b[1]-a[1]); const pmax=Math.max(1,...plats.map(p=>p[1]));
   const pcol=p=>PLAT_COLORS[plats.findIndex(x=>x[0]===p)%PLAT_COLORS.length];
   const short=c.total-c.reserved; const pct=c.total?Math.min(100,c.reserved/c.total*100):100;
-  return `<div class="stack">${savingsCard(true)}
+  return `<div class="stack">${potPicker()}
    <div class="spread"><h2>Royalty's ${y}</h2>
      ${years.length>1?`<select id="taxYear" aria-label="Jaar">${years.map(x=>`<option ${x===y?'selected':''}>${x}</option>`).join('')}</select>`:''}</div>
    ${y!==TAX.year?`<div class="banner"><div>De belastingschatting gebruikt de tarieven van <b>${TAX.year}</b>. Voor ${y} wijken die iets af.</div></div>`:''}
@@ -2383,6 +2390,7 @@ document.addEventListener('change',e=>{
   if(t.id==='t-za'){const y=ui.taxYear;S.tax[y]={...(S.tax[y]||{}),za:t.checked};save();render();}
   if(t.matches('input[data-ppname]')){S.ppNames=S.ppNames||{};const k=t.dataset.ppname;S.ppNames[k]={...(S.ppNames[k]||{}),name:t.value.trim()};save();render();}
   if(t.matches('select[data-ppcat]')){S.ppNames=S.ppNames||{};const k=t.dataset.ppcat;S.ppNames[k]={...(S.ppNames[k]||{}),cat:t.value};save();render();}
+  if(t.matches('select[data-act-pot]')){for(const [i,x] of Object.entries(S.accounts)){if(x.type==='pot')x.type='spaar';} if(t.value&&S.accounts[t.value])S.accounts[t.value].type='pot';save();render();}
   if(t.matches('select[data-acctype]')){S.accounts[t.dataset.acctype].type=t.value;save();render();}
   if(t.matches('input[data-acclabel]')){S.accounts[t.dataset.acclabel].label=t.value.trim()||S.accounts[t.dataset.acclabel].label;save();}
   if(t.matches('input[data-budget]')){const v=+t.value;if(v>0)S.budgets[t.dataset.budget]=v;else delete S.budgets[t.dataset.budget];save();}
